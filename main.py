@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 config_path = Path(__file__).parent / 'config.yml'
 if config_path.exists():
-    with open(config_path) as f:
+    with config_path.open() as f:
         config = yaml.safe_load(f)
 else:
     config = {}
@@ -17,8 +17,8 @@ LOG_LEVEL = config.get('LOG_LEVEL', 'INFO')
 
 load_dotenv()
 
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-GUILD_ID = os.getenv('GUILD_ID')
+BOT_TOKEN = os.environ['BOT_TOKEN']
+GUILD_ID = os.environ['GUILD_ID']
 
 logger = logging.getLogger('pzsd')
 logger.setLevel(LOG_LEVEL)
