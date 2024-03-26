@@ -21,4 +21,4 @@ BOT_TOKEN=yourbottokenhere
 GUILD_ID=yourguildidhere
 ```
 
-Finally you can run the bot with `python main.py`
+Finally you can run the bot with `python -m pzsd_bot`
