@@ -13,7 +13,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 metadata = MetaData()
 
-user = Table(
+pzsd_user = Table(
     "pzsd_user",
     metadata,
     Column(
