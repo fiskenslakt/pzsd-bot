@@ -6,24 +6,26 @@ import discord
 import yaml
 from dotenv import load_dotenv
 
-config_path = Path(__file__).parent / 'config.yml'
+config_path = Path(__file__).parent / "config.yml"
 if config_path.exists():
     with config_path.open() as f:
         config = yaml.safe_load(f)
 else:
     config = {}
 
-LOG_LEVEL = config.get('LOG_LEVEL', 'INFO')
+LOG_LEVEL = config.get("LOG_LEVEL", "INFO")
 
 load_dotenv()
 
-BOT_TOKEN = os.environ['BOT_TOKEN']
-GUILD_ID = os.environ['GUILD_ID']
+BOT_TOKEN = os.environ["BOT_TOKEN"]
+GUILD_ID = os.environ["GUILD_ID"]
 
-logger = logging.getLogger('pzsd')
+logger = logging.getLogger("pzsd")
 logger.setLevel(LOG_LEVEL)
-handler = logging.FileHandler(filename='pzsd_bot.log', encoding='utf-8', mode='w')
-handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+handler = logging.FileHandler(filename="pzsd_bot.log", encoding="utf-8", mode="w")
+handler.setFormatter(
+    logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
+)
 logger.addHandler(handler)
 
 bot = discord.Bot()
