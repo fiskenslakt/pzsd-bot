@@ -77,7 +77,7 @@ async def on_message(message):
                 )
                 raise
 
-            if not bestower:
+            if bestower is None:
                 logger.info(
                     "User '%s' with snowflake '%s' tried to bestow points but wasn't in the user table",
                     message.author.name,
@@ -106,7 +106,7 @@ async def on_message(message):
                 )
                 raise
 
-            if not recipient:
+            if recipient is None:
                 logger.info(
                     "%s tried to bestow points to '%s' but they weren't in the user table",
                     bestower.name,
