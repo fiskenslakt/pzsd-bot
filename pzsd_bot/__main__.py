@@ -112,9 +112,8 @@ async def on_message(message):
                 )
                 return
 
-        valid_transaction = True
-        if bestower.id == recipient.id:
-            valid_transaction = False
+        self_point_violation = bestower.id == recipient.id
+        if self_point_violation:
             logger.info(
                 "%s attempted to give themselves %s points. Very naughty.",
                 bestower.name,
@@ -128,7 +127,7 @@ async def on_message(message):
                 recipient.name,
             )
 
-        if valid_transaction:
+        if not self_point_violation:
             async with engine.begin() as conn:
                 await conn.execute(
                     insert(ledger).values(
@@ -139,12 +138,12 @@ async def on_message(message):
                 )
                 logger.info("Added point transaction to ledger")
 
-        if valid_transaction:
-            title = "Point transaction"
-            color = 0xFFFFFF
-        else:
+        if self_point_violation:
             title = "Self point violation!"
             color = 0xFF0000
+        else:
+            title = "Point transaction"
+            color = 0xFFFFFF
         embed = discord.Embed(
             title=title,
             description=f"[Jump to original message]({message.jump_url})",
@@ -153,7 +152,9 @@ async def on_message(message):
         )
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
         embed.add_field(name="Recipient", value=recipient.name, inline=True)
-        embed.add_field(name="Point amount", value=str(point_amount), inline=True)
+        embed.add_field(
+            name="Point amount", value=format(point_amount, ","), inline=True
+        )
         message_content = message.content
         if len(message_content) > 80:
             message_content = message_content[:80] + "..."
