@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import os
 import re
@@ -76,7 +77,7 @@ async def on_message(message):
 
             if recipient_name:
                 result = await conn.execute(
-                    select(pzsd_user).where(pzsd_user.c.name == recipient_name)
+                    select(pzsd_user).where(pzsd_user.c.name == recipient_name.lower())
                 )
             else:
                 result = await conn.execute(
@@ -94,22 +95,43 @@ async def on_message(message):
                 )
                 return
 
-        logger.info(
-            f"{bestower.name} awarding {point_amount} point(s) to {recipient.name}"
-        )
-
-        async with engine.begin() as conn:
-            await conn.execute(
-                insert(ledger).values(
-                    bestower=bestower.id, recipient=recipient.id, points=point_amount
-                )
+        valid_transaction = True
+        if bestower.id == recipient.id:
+            valid_transaction = False
+            logger.info(
+                "%s attempted to give themselves %s points. Very naughty.",
+                bestower.name,
+                point_amount,
             )
-            logger.info("Added point transaction to ledger")
+        else:
+            logger.info(
+                "%s awarding %s point(s) to %s",
+                bestower.name,
+                point_amount,
+                recipient.name,
+            )
 
+        if valid_transaction:
+            async with engine.begin() as conn:
+                await conn.execute(
+                    insert(ledger).values(
+                        bestower=bestower.id,
+                        recipient=recipient.id,
+                        points=point_amount,
+                    )
+                )
+                logger.info("Added point transaction to ledger")
+
+        if valid_transaction:
+            title = "Point transaction"
+            color = 0xFFFFFF
+        else:
+            title = "Self point violation!"
+            color = 0xFF0000
         embed = discord.Embed(
-            title="Point transaction",
+            title=title,
             description=f"[Jump to original message]({message.jump_url})",
-            colour=0xFFFFFF,
+            colour=color,
             timestamp=datetime.now(),
         )
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
