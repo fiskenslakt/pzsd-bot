@@ -120,7 +120,7 @@ async def on_message(message):
             message_content = message_content[:80] + "..."
         embed.add_field(name="Content of message:", value=message_content, inline=False)
 
-        points_log_channel = bot.get_channel(os.environ["POINTS_LOG_CHANNEL"])
+        points_log_channel = bot.get_channel(int(os.environ["POINTS_LOG_CHANNEL"]))
         await points_log_channel.send(embed=embed)
 
 
