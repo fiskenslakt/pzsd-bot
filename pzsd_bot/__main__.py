@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 from sqlalchemy import insert, select
 from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.sql.functions import sum as sql_sum
 
 from pzsd_bot.model import ledger, pzsd_user
 
@@ -166,23 +167,19 @@ async def on_message(message):
 
 @bot.slash_command(guild_ids=[GUILD_ID])
 async def leaderboard(ctx):
-    points = {}
-
     async with engine.connect() as conn:
-        result = await conn.execute(select(pzsd_user))
-        for row in result.fetchall():
-            points[row.id] = {"name": row.name, "point_total": 0}
-
-        result = await conn.execute(select(ledger))
-        for row in result:
-            points[row.recipient]["point_total"] += row.points
+        j = ledger.join(pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True)
+        result = await conn.execute(
+            select(pzsd_user.c.name, sql_sum(ledger.c.points))
+            .select_from(j)
+            .group_by(pzsd_user.c.id)
+        )
+        points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
 
     embed = discord.Embed(title="Points Leaderboard", colour=0xA8A434)
-    for i, user in enumerate(
-        sorted(points.values(), key=lambda d: d["point_total"], reverse=True), 1
-    ):
-        name = user["name"].capitalize()
-        point_total = user["point_total"]
+    for i, (name, point_total) in enumerate(points, 1):
+        name = name.capitalize()
+        point_total = int(point_total)  # avoid scientific notation
         embed.add_field(
             name=f"{i}. {name}", value=f"{point_total:,} points", inline=False
         )
