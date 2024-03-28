@@ -125,8 +125,39 @@ async def on_message(message):
 
 
 @bot.slash_command(guild_ids=[GUILD_ID])
-async def test(ctx):
-    await ctx.respond("This was a test.")
+async def leaderboard(ctx):
+    points = {}
+
+    async with engine.connect() as conn:
+        result = await conn.execute(select(pzsd_user))
+        for row in result.fetchall():
+            points[row.id] = {"name": row.name, "point_total": 0}
+
+        result = await conn.execute(select(ledger))
+        for row in result:
+            points[row.recipient]["point_total"] += row.points
+
+    embed = discord.Embed(title="Points Leaderboard", colour=0xA8A434)
+    for i, user in enumerate(
+        sorted(points.values(), key=lambda d: d["point_total"], reverse=True), 1
+    ):
+        name = user["name"].capitalize()
+        point_total = user["point_total"]
+        embed.add_field(
+            name=f"{i}. {name}", value=f"{point_total:,} points", inline=False
+        )
+
+    await ctx.respond(embed=embed)
 
 
-bot.run(BOT_TOKEN)
+async def run_bot():
+    try:
+        await bot.start(BOT_TOKEN)
+    finally:
+        await engine.dispose()
+
+
+try:
+    asyncio.run(run_bot())
+except KeyboardInterrupt:
+    print("Exiting...")
