@@ -8,7 +8,7 @@ import discord
 from discord import Intents
 from dotenv import load_dotenv
 from sqlalchemy import insert, select
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from pzsd_bot.model import ledger, pzsd_user
@@ -67,8 +67,15 @@ async def on_message(message):
                 )
             )
             try:
-                bestower = result.one()
-            except NoResultFound:
+                bestower = result.one_or_none()
+            except MultipleResultsFound:
+                logger.error(
+                    "Multiple users with snowflake '%s' found in user table",
+                    message.author.id,
+                )
+                raise
+
+            if not bestower:
                 logger.info(
                     "User '%s' with snowflake '%s' tried to bestow points but wasn't in the user table",
                     message.author.name,
@@ -87,8 +94,17 @@ async def on_message(message):
                     )
                 )
             try:
-                recipient = result.one()
-            except NoResultFound:
+                recipient = result.one_or_none()
+            except MultipleResultsFound:
+                recipient_type = "name" if recipient_name else "snowflake"
+                logger.error(
+                    "Multiple users with %s '%s' found in user table",
+                    recipient_type,
+                    recipient_name or recipient_id,
+                )
+                raise
+
+            if not recipient:
                 logger.info(
                     "%s tried to bestow points to '%s' but they weren't in the user table",
                     bestower.name,
