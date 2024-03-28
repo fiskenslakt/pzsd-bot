@@ -39,7 +39,8 @@ logger.addHandler(handler)
 bot = discord.Bot(intents=Intents.all())
 
 point_pattern = re.compile(
-    r"(?:^| )([+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points? (?:to|for) (?:(\w+)|<@(\d+)>)",
+    r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
+    r"+points? (?:to|for) (?:(?P<recipient_name>\w+)|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
@@ -55,9 +56,9 @@ async def on_message(message):
         return
 
     if match := point_pattern.search(message.content):
-        point_amount = int(match[1].replace(",", ""))
-        recipient_name = match[2]
-        recipient_id = match[3]
+        point_amount = int(match["point_amount"].replace(",", ""))
+        recipient_name = match["recipient_name"]
+        recipient_id = match["recipient_id"]
 
         async with engine.connect() as conn:
             result = await conn.execute(
