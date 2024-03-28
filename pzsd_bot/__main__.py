@@ -19,6 +19,7 @@ load_dotenv()
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 GUILD_ID = os.environ["GUILD_ID"]
+POINTS_LOG_CHANNEL = int(os.environ["POINTS_LOG_CHANNEL"])
 
 connection_str = "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
     os.getenv("PGUSER", "postgres"),
@@ -161,7 +162,7 @@ async def on_message(message):
             message_content = message_content[:80] + "..."
         embed.add_field(name="Content of message:", value=message_content, inline=False)
 
-        points_log_channel = bot.get_channel(int(os.environ["POINTS_LOG_CHANNEL"]))
+        points_log_channel = bot.get_channel(POINTS_LOG_CHANNEL)
         await points_log_channel.send(embed=embed)
 
 
