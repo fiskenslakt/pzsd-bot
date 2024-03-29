@@ -190,7 +190,8 @@ async def leaderboard(ctx):
 
 async def run_bot():
     try:
-        await bot.start(BOT_TOKEN)
+        async with bot:
+            await bot.start(BOT_TOKEN)
     finally:
         await engine.dispose()
 
