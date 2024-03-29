@@ -32,7 +32,7 @@ engine = create_async_engine(connection_str)
 
 logger = logging.getLogger("pzsd")
 logger.setLevel(LOG_LEVEL)
-handler = logging.FileHandler(filename="pzsd_bot.log", encoding="utf-8", mode="w")
+handler = logging.FileHandler(filename="pzsd_bot.log", encoding="utf-8", mode="a")
 handler.setFormatter(
     logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s")
 )
