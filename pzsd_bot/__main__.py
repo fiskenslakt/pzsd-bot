@@ -20,6 +20,7 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 BOT_TOKEN = os.environ["BOT_TOKEN"]
 GUILD_ID = os.environ["GUILD_ID"]
 POINTS_LOG_CHANNEL = int(os.environ["POINTS_LOG_CHANNEL"])
+POINT_MAX_VALUE = 9223372036854775807
 
 connection_str = "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
     os.getenv("PGUSER", "postgres"),
@@ -113,6 +114,16 @@ async def on_message(message):
                     recipient_name or recipient_id,
                 )
                 return
+
+        excessive_point_violation = abs(point_amount) > POINT_MAX_VALUE
+        if excessive_point_violation:
+            logger.info(
+                "%s tried to give %s more than the max allowed points (%s)",
+                bestower.name,
+                recipient.name,
+                format(point_amount, ','),
+            )
+            return
 
         self_point_violation = bestower.id == recipient.id
         if self_point_violation:
