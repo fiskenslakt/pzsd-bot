@@ -136,7 +136,7 @@ async def on_message(message):
             logger.info(
                 "%s awarding %s point(s) to %s",
                 bestower.name,
-                point_amount,
+                format(point_amount, ','),
                 recipient.name,
             )
 
