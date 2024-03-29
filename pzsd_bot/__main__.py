@@ -50,7 +50,8 @@ point_pattern = re.compile(
 
 @bot.event
 async def on_ready():
-    print(f"We have logged in as {bot.user}")
+    print(f"Ready.")
+    logger.info("Logged in as %s", bot.user)
 
 
 @bot.event
