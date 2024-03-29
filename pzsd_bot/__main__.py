@@ -211,4 +211,4 @@ async def run_bot():
 try:
     asyncio.run(run_bot())
 except KeyboardInterrupt:
-    print("Exiting...")
+    logger.info("Exiting.")
