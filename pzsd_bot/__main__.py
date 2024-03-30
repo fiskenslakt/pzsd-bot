@@ -3,12 +3,12 @@ import logging
 import os
 import re
 from datetime import datetime
+from enum import Enum
 
 import discord
 from discord import Intents
 from dotenv import load_dotenv
 from sqlalchemy import insert, select
-from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql.functions import sum as sql_sum
 
@@ -21,6 +21,7 @@ BOT_TOKEN = os.environ["BOT_TOKEN"]
 GUILD_ID = os.environ["GUILD_ID"]
 POINTS_LOG_CHANNEL = int(os.environ["POINTS_LOG_CHANNEL"])
 POINT_MAX_VALUE = 9223372036854775807
+POINT_MIN_VALUE = ~POINT_MAX_VALUE
 
 connection_str = "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
     os.getenv("PGUSER", "postgres"),
@@ -48,9 +49,15 @@ point_pattern = re.compile(
 )
 
 
+class Color(Enum):
+    WHITE = 0xFFFFFF
+    RED = 0xFF0000
+    YELLOWY = 0xA8A434
+
+
 @bot.event
 async def on_ready():
-    print(f"Ready.")
+    print("Ready.")
     logger.info("Logged in as %s", bot.user)
 
 
@@ -61,6 +68,7 @@ async def on_message(message):
 
     if match := point_pattern.search(message.content):
         point_amount = int(match["point_amount"].replace(",", ""))
+        pretty_point_amount = format(point_amount, ",")
         recipient_name = match["recipient_name"]
         recipient_id = match["recipient_id"]
 
@@ -70,14 +78,8 @@ async def on_message(message):
                     pzsd_user.c.discord_snowflake == str(message.author.id)
                 )
             )
-            try:
-                bestower = result.one_or_none()
-            except MultipleResultsFound:
-                logger.error(
-                    "Multiple users with snowflake '%s' found in user table",
-                    message.author.id,
-                )
-                raise
+
+            bestower = result.one_or_none()
 
             if bestower is None:
                 logger.info(
@@ -88,25 +90,13 @@ async def on_message(message):
                 return
 
             if recipient_name:
-                result = await conn.execute(
-                    select(pzsd_user).where(pzsd_user.c.name == recipient_name.lower())
-                )
+                condition = pzsd_user.c.name == recipient_name.lower()
             else:
-                result = await conn.execute(
-                    select(pzsd_user).where(
-                        pzsd_user.c.discord_snowflake == recipient_id
-                    )
-                )
-            try:
-                recipient = result.one_or_none()
-            except MultipleResultsFound:
-                recipient_type = "name" if recipient_name else "snowflake"
-                logger.error(
-                    "Multiple users with %s '%s' found in user table",
-                    recipient_type,
-                    recipient_name or recipient_id,
-                )
-                raise
+                condition = pzsd_user.c.discord_snowflake == recipient_id
+
+            result = await conn.execute(select(pzsd_user).where(condition))
+
+            recipient = result.one_or_none()
 
             if recipient is None:
                 logger.info(
@@ -116,32 +106,26 @@ async def on_message(message):
                 )
                 return
 
-        excessive_point_violation = abs(point_amount) > POINT_MAX_VALUE
+        excessive_point_violation = (
+            not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
+        )
         if excessive_point_violation:
             logger.info(
                 "%s tried to give %s more than the max allowed points (%s)",
                 bestower.name,
                 recipient.name,
-                format(point_amount, ','),
+                pretty_point_amount,
             )
             return
 
         self_point_violation = bestower.id == recipient.id
-        if self_point_violation:
-            logger.info(
-                "%s attempted to give themselves %s points. Very naughty.",
-                bestower.name,
-                point_amount,
-            )
-        else:
+        if not self_point_violation:
             logger.info(
                 "%s awarding %s point(s) to %s",
                 bestower.name,
-                format(point_amount, ','),
+                pretty_point_amount,
                 recipient.name,
             )
-
-        if not self_point_violation:
             async with engine.begin() as conn:
                 await conn.execute(
                     insert(ledger).values(
@@ -152,12 +136,17 @@ async def on_message(message):
                 )
                 logger.info("Added point transaction to ledger")
 
-        if self_point_violation:
-            title = "Self point violation!"
-            color = 0xFF0000
-        else:
             title = "Point transaction"
-            color = 0xFFFFFF
+            color = Color.WHITE.value
+        else:
+            logger.info(
+                "%s attempted to give themselves %s points. Very naughty.",
+                bestower.name,
+                pretty_point_amount,
+            )
+            title = "Self point violation!"
+            color = Color.RED.value
+
         embed = discord.Embed(
             title=title,
             description=f"[Jump to original message]({message.jump_url})",
@@ -166,12 +155,10 @@ async def on_message(message):
         )
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
         embed.add_field(name="Recipient", value=recipient.name, inline=True)
-        embed.add_field(
-            name="Point amount", value=format(point_amount, ","), inline=True
-        )
+        embed.add_field(name="Point amount", value=pretty_point_amount, inline=True)
         message_content = message.content
         if len(message_content) > 80:
-            message_content = message_content[:80] + "..."
+            message_content = message_content[:80] + "\N{HORIZONTAL ELLIPSIS}"
         embed.add_field(name="Content of message:", value=message_content, inline=False)
 
         points_log_channel = bot.get_channel(POINTS_LOG_CHANNEL)
@@ -189,7 +176,7 @@ async def leaderboard(ctx):
         )
         points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
 
-    embed = discord.Embed(title="Points Leaderboard", colour=0xA8A434)
+    embed = discord.Embed(title="Points Leaderboard", colour=Color.YELLOWY.value)
     for i, (name, point_total) in enumerate(points, 1):
         name = name.capitalize()
         point_total = int(point_total)  # avoid scientific notation
