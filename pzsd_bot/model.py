@@ -22,8 +22,8 @@ pzsd_user = Table(
         primary_key=True,
         server_default=text("gen_random_uuid()"),
     ),
-    Column("name", Text, nullable=False),
-    Column("discord_snowflake", Text, nullable=False),
+    Column("name", Text, nullable=False, unique=True),
+    Column("discord_snowflake", Text, nullable=False, unique=True),
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
 )
 
