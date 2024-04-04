@@ -43,7 +43,7 @@ bot = discord.Bot(intents=Intents.all())
 
 point_pattern = re.compile(
     r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
-    r"+points? (?:to|for) (?:(?P<recipient_name>\w+)|<@(?P<recipient_id>\d+)>)",
+    r"+points? (?:to|for) (?:(?P<recipient_name>[\w-]+)|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
