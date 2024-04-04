@@ -18,7 +18,6 @@ load_dotenv()
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 BOT_TOKEN = os.environ["BOT_TOKEN"]
-GUILD_ID = os.environ["GUILD_ID"]
 POINTS_LOG_CHANNEL = int(os.environ["POINTS_LOG_CHANNEL"])
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE
@@ -165,7 +164,7 @@ async def on_message(message):
         await points_log_channel.send(embed=embed)
 
 
-@bot.slash_command(guild_ids=[GUILD_ID])
+@bot.slash_command()
 async def leaderboard(ctx):
     async with engine.connect() as conn:
         j = ledger.join(pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True)
