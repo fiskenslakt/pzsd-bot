@@ -164,7 +164,7 @@ async def on_message(message):
         await points_log_channel.send(embed=embed)
 
 
-@bot.slash_command()
+@bot.slash_command(description="Display everyone's points in descending order.")
 async def leaderboard(ctx):
     async with engine.connect() as conn:
         j = ledger.join(pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True)
