@@ -6,9 +6,10 @@ from datetime import datetime
 from enum import Enum
 
 import discord
-from discord import Intents
+from discord import Intents, default_permissions
+from discord.commands import option
 from dotenv import load_dotenv
-from sqlalchemy import insert, select
+from sqlalchemy import insert, select, update
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql.functions import sum as sql_sum
 
@@ -186,6 +187,98 @@ async def leaderboard(ctx):
         embed.add_field(
             name=f"{i}. {name}", value=f"{point_total:,} points", inline=False
         )
+
+    await ctx.respond(embed=embed)
+
+
+@bot.slash_command(description="Add new name that can be bestowed points.")
+@option("name", description="The exact name to use when bestowing points.")
+@option("snowflake", description="Their discord ID if applicable.", required=False)
+@default_permissions(administrator=True)
+async def register(ctx, name, snowflake):
+    logger.info(
+        "%s invoked /register with name=%s and snowflake=%s",
+        ctx.author.name,
+        name,
+        snowflake,
+    )
+
+    async with engine.connect() as conn:
+        result = await conn.execute(select(pzsd_user).where(pzsd_user.c.name == name))
+
+    user_to_add = result.one_or_none()
+    if user_to_add is not None:
+        if user_to_add.is_active:
+            logger.info("User '%s' already exists", name)
+            await ctx.respond(f"'{name}' already exists!")
+            return
+        else:
+            logger.info("User '%s' exists but is inactive", name)
+            async with engine.begin() as conn:
+                await conn.execute(
+                    update(pzsd_user)
+                    .where(pzsd_user.c.name == name)
+                    .values(is_active=True, discord_snowflake=snowflake)
+                )
+    else:
+        async with engine.begin() as conn:
+            await conn.execute(
+                insert(pzsd_user).values(
+                    name=name,
+                    discord_snowflake=snowflake,
+                )
+            )
+
+    logger.info("Added user '%s' to user table", name)
+
+    await ctx.respond(f"Added user with name {name}")
+
+
+@bot.slash_command(
+    description="Remove name from being able to be bestowed points.",
+)
+@option("name", description="The exact name in the user table")
+@default_permissions(administrator=True)
+async def unregister(ctx, name):
+    logger.info(
+        "%s invoked /unregister with name=%s",
+        ctx.author.name,
+        name,
+    )
+
+    async with engine.connect() as conn:
+        result = await conn.execute(select(pzsd_user).where(pzsd_user.c.name == name))
+
+    user_to_del = result.one_or_none()
+    if user_to_del is None or not user_to_del.is_active:
+        logger.info("User '%s' doesn't exist in user table", name)
+        await ctx.respond(f"User '{name}' already doesn't exist!")
+        return
+
+    async with engine.begin() as conn:
+        await conn.execute(
+            update(pzsd_user).where(pzsd_user.c.name == name).values(is_active=False)
+        )
+
+    logger.info("Removed user '%s' from user table", name)
+
+    await ctx.respond(f"Removed user with name {name}")
+
+
+@bot.slash_command(description="Show user table.")
+@default_permissions(administrator=True)
+async def users(ctx):
+    logger.debug("%s invoked /users", ctx.author.name)
+
+    async with engine.connect() as conn:
+        result = await conn.execute(
+            select(pzsd_user).where(pzsd_user.c.is_active == True)  # noqa: E712
+        )
+
+    embed = discord.Embed()
+
+    for row in result:
+        embed.add_field(name=row.name, value=row.discord_snowflake or "N/A")
 
     await ctx.respond(embed=embed)
 
