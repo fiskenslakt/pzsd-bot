@@ -74,7 +74,8 @@ async def on_message(message):
         async with engine.connect() as conn:
             result = await conn.execute(
                 select(pzsd_user).where(
-                    pzsd_user.c.discord_snowflake == str(message.author.id)
+                    (pzsd_user.c.discord_snowflake == str(message.author.id))
+                    & (pzsd_user.c.is_active == True)  # noqa: E712
                 )
             )
 
@@ -93,7 +94,9 @@ async def on_message(message):
             else:
                 condition = pzsd_user.c.discord_snowflake == recipient_id
 
-            result = await conn.execute(select(pzsd_user).where(condition))
+            result = await conn.execute(
+                select(pzsd_user).where(condition & pzsd_user.c.is_active == True)  # noqa: E712
+            )
 
             recipient = result.one_or_none()
 
@@ -171,6 +174,7 @@ async def leaderboard(ctx):
         result = await conn.execute(
             select(pzsd_user.c.name, sql_sum(ledger.c.points))
             .select_from(j)
+            .where(pzsd_user.c.is_active == True)  # noqa: E712
             .group_by(pzsd_user.c.id)
         )
         points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
