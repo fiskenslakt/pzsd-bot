@@ -209,7 +209,7 @@ async def register(ctx, name, snowflake):
     user_to_add = result.one_or_none()
     if user_to_add is not None:
         if user_to_add.is_active:
-            logger.info("User '%s' already exists", name)
+            logger.info("User '%s' already exists, doing nothing", name)
             await ctx.respond(f"'{name}' already exists!")
             return
         else:
@@ -220,6 +220,8 @@ async def register(ctx, name, snowflake):
                     .where(pzsd_user.c.name == name)
                     .values(is_active=True, discord_snowflake=snowflake)
                 )
+            logger.info("Reactivated user '%s' in user table", name)
+            await ctx.respond(f"Reactivated user with name {name}")
     else:
         async with engine.begin() as conn:
             await conn.execute(
@@ -228,10 +230,8 @@ async def register(ctx, name, snowflake):
                     discord_snowflake=snowflake,
                 )
             )
-
-    logger.info("Added user '%s' to user table", name)
-
-    await ctx.respond(f"Added user with name {name}")
+        logger.info("Added user '%s' to user table", name)
+        await ctx.respond(f"Added user with name {name}")
 
 
 @bot.slash_command(
@@ -250,9 +250,13 @@ async def unregister(ctx, name):
         result = await conn.execute(select(pzsd_user).where(pzsd_user.c.name == name))
 
     user_to_del = result.one_or_none()
-    if user_to_del is None or not user_to_del.is_active:
-        logger.info("User '%s' doesn't exist in user table", name)
+    if user_to_del is None:
+        logger.info("User '%s' doesn't exist in user table, doing nothing", name)
         await ctx.respond(f"User '{name}' already doesn't exist!")
+        return
+    elif not user_to_del.is_active:
+        logger.info("User '%s' is currently inactive, doing nothing", name)
+        await ctx.respond(f"User '{name}' is already inactive!")
         return
 
     async with engine.begin() as conn:
@@ -260,9 +264,8 @@ async def unregister(ctx, name):
             update(pzsd_user).where(pzsd_user.c.name == name).values(is_active=False)
         )
 
-    logger.info("Removed user '%s' from user table", name)
-
-    await ctx.respond(f"Removed user with name {name}")
+    logger.info("Deactivated user '%s' in user table", name)
+    await ctx.respond(f"Deactivated user with name {name}")
 
 
 @bot.slash_command(description="Show user table.")
