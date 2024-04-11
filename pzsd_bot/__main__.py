@@ -76,7 +76,7 @@ async def on_message(message):
             result = await conn.execute(
                 select(pzsd_user).where(
                     (pzsd_user.c.discord_snowflake == str(message.author.id))
-                    & (pzsd_user.c.is_active == True)  # noqa: E712
+                    & (pzsd_user.c.is_active == True)
                 )
             )
 
@@ -96,7 +96,7 @@ async def on_message(message):
                 condition = pzsd_user.c.discord_snowflake == recipient_id
 
             result = await conn.execute(
-                select(pzsd_user).where(condition & pzsd_user.c.is_active == True)  # noqa: E712
+                select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
             )
 
             recipient = result.one_or_none()
@@ -175,7 +175,7 @@ async def leaderboard(ctx):
         result = await conn.execute(
             select(pzsd_user.c.name, sql_sum(ledger.c.points))
             .select_from(j)
-            .where(pzsd_user.c.is_active == True)  # noqa: E712
+            .where(pzsd_user.c.is_active == True)
             .group_by(pzsd_user.c.id)
         )
         points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
@@ -272,7 +272,7 @@ async def users(ctx):
 
     async with engine.connect() as conn:
         result = await conn.execute(
-            select(pzsd_user).where(pzsd_user.c.is_active == True)  # noqa: E712
+            select(pzsd_user).where(pzsd_user.c.is_active == True)
         )
 
     embed = discord.Embed()
