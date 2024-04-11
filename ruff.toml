@@ -1,0 +1,3 @@
+[lint]
+# ignore equality comparisons to `True`
+ignore = ["E712"]

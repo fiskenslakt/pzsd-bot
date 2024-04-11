@@ -1,5 +1,6 @@
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -23,8 +24,9 @@ pzsd_user = Table(
         server_default=text("gen_random_uuid()"),
     ),
     Column("name", Text, nullable=False, unique=True),
-    Column("discord_snowflake", Text, nullable=False, unique=True),
+    Column("discord_snowflake", Text, nullable=True, unique=True),
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
+    Column("is_active", Boolean, nullable=False, server_default=text("true")),
 )
 
 ledger = Table(

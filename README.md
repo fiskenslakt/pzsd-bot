@@ -33,7 +33,6 @@ Before running the bot, a `.env` file is expected to exist that looks like the f
 
 ```
 BOT_TOKEN=yourbottokenhere
-GUILD_ID=yourguildidhere
 POINTS_LOG_CHANNEL=channelidhere
 ```
 
