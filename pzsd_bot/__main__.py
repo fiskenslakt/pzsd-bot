@@ -90,24 +90,28 @@ async def on_message(message):
                 )
                 return
 
-            if recipient_name:
-                condition = pzsd_user.c.name == recipient_name.lower()
+            if recipient_name.lower() == "everyone":
+                is_to_everyone = True
             else:
-                condition = pzsd_user.c.discord_snowflake == recipient_id
+                is_to_everyone = False
+                if recipient_name:
+                    condition = pzsd_user.c.name == recipient_name.lower()
+                else:
+                    condition = pzsd_user.c.discord_snowflake == recipient_id
 
-            result = await conn.execute(
-                select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
-            )
-
-            recipient = result.one_or_none()
-
-            if recipient is None:
-                logger.info(
-                    "%s tried to bestow points to '%s' but they weren't in the user table",
-                    bestower.name,
-                    recipient_name or recipient_id,
+                result = await conn.execute(
+                    select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
                 )
-                return
+
+                recipient = result.one_or_none()
+
+                if recipient is None:
+                    logger.info(
+                        "%s tried to bestow points to '%s' but they weren't in the user table",
+                        bestower.name,
+                        recipient_name or recipient_id,
+                    )
+                    return
 
         excessive_point_violation = (
             not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
@@ -116,7 +120,7 @@ async def on_message(message):
             logger.info(
                 "%s tried to give %s more than the max allowed points (%s)",
                 bestower.name,
-                recipient.name,
+                recipient.name if not is_to_everyone else "everyone",
                 pretty_point_amount,
             )
             return
@@ -127,18 +131,33 @@ async def on_message(message):
                 "%s awarding %s point(s) to %s",
                 bestower.name,
                 pretty_point_amount,
-                recipient.name,
+                recipient.name if not is_to_everyone else "everyone",
             )
-            async with engine.begin() as conn:
-                await conn.execute(
-                    insert(ledger).values(
-                        bestower=bestower.id,
-                        recipient=recipient.id,
-                        points=point_amount,
+            if not is_to_everyone:
+                async with engine.begin() as conn:
+                    await conn.execute(
+                        insert(ledger).values(
+                            bestower=bestower.id,
+                            recipient=recipient.id,
+                            points=point_amount,
+                        )
                     )
-                )
-                logger.info("Added point transaction to ledger")
-
+            else:
+                async with engine.begin() as conn:
+                    select_query = select(pzsd_user).where(pzsd_user.c.is_active == True and pzsd_user.c.id != bestower.id)
+                    async with conn.execute(
+                        select(select_query)
+                    ) as result:
+                        recipients = result.fetchall()
+                        ledger_entries = [{
+                            'bestower': bestower.id,
+                            'recipient': user.id,
+                            'points': point_amount,
+                        } for user in recipients]
+                        await conn.execute(
+                            insert(ledger).values(ledger_entries)
+                        )
+            logger.info("Added point transaction to ledger")
             title = "Point transaction"
             color = Color.WHITE.value
         else:
@@ -157,7 +176,7 @@ async def on_message(message):
             timestamp=datetime.now(),
         )
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
-        embed.add_field(name="Recipient", value=recipient.name, inline=True)
+        embed.add_field(name="Recipient", value=recipient.name if not is_to_everyone else "everyone", inline=True)
         embed.add_field(name="Point amount", value=pretty_point_amount, inline=True)
         message_content = message.content
         if len(message_content) > 80:
