@@ -9,7 +9,7 @@ import discord
 from discord import Intents, default_permissions
 from discord.commands import option
 from dotenv import load_dotenv
-from sqlalchemy import insert, select, update
+from sqlalchemy import insert, select, text, update
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql.functions import sum as sql_sum
 
@@ -90,15 +90,15 @@ async def on_message(message):
                 )
                 return
 
-            if recipient_name.lower() == "everyone":
+            is_to_everyone = False
+            if recipient_name is None:
+                condition = pzsd_user.c.discord_snowflake == recipient_id
+            elif recipient_name.lower() == "everyone":
                 is_to_everyone = True
             else:
-                is_to_everyone = False
-                if recipient_name:
-                    condition = pzsd_user.c.name == recipient_name.lower()
-                else:
-                    condition = pzsd_user.c.discord_snowflake == recipient_id
+                condition = pzsd_user.c.name == recipient_name.lower()
 
+            if not is_to_everyone:
                 result = await conn.execute(
                     select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
                 )
@@ -125,7 +125,7 @@ async def on_message(message):
             )
             return
 
-        self_point_violation = bestower.id == recipient.id
+        self_point_violation = is_to_everyone is False and bestower.id == recipient.id
         if not self_point_violation:
             logger.info(
                 "%s awarding %s point(s) to %s",
@@ -142,22 +142,26 @@ async def on_message(message):
                             points=point_amount,
                         )
                     )
+                logger.info("Added point transaction to ledger")
             else:
                 async with engine.begin() as conn:
-                    select_query = select(pzsd_user).where(pzsd_user.c.is_active == True and pzsd_user.c.id != bestower.id)
-                    async with conn.execute(
-                        select(select_query)
-                    ) as result:
-                        recipients = result.fetchall()
-                        ledger_entries = [{
-                            'bestower': bestower.id,
-                            'recipient': user.id,
-                            'points': point_amount,
-                        } for user in recipients]
-                        await conn.execute(
-                            insert(ledger).values(ledger_entries)
+                    users = select(
+                        text(f"'{bestower.id}'"),
+                        pzsd_user.c.id,
+                        text(str(point_amount)),
+                    ).where(
+                        (pzsd_user.c.is_active == True)
+                        & (pzsd_user.c.id != bestower.id)
+                    )
+                    result = await conn.execute(
+                        insert(ledger).from_select(
+                            ["bestower", "recipient", "points"], users
                         )
-            logger.info("Added point transaction to ledger")
+                    )
+                    logger.info(
+                        "Added %s point transactions to ledger", result.rowcount
+                    )
+
             title = "Point transaction"
             color = Color.WHITE.value
         else:
@@ -176,7 +180,11 @@ async def on_message(message):
             timestamp=datetime.now(),
         )
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
-        embed.add_field(name="Recipient", value=recipient.name if not is_to_everyone else "everyone", inline=True)
+        embed.add_field(
+            name="Recipient",
+            value=recipient.name if not is_to_everyone else "everyone",
+            inline=True,
+        )
         embed.add_field(name="Point amount", value=pretty_point_amount, inline=True)
         message_content = message.content
         if len(message_content) > 80:
@@ -215,12 +223,19 @@ async def leaderboard(ctx):
 @option("snowflake", description="Their discord ID if applicable.", required=False)
 @default_permissions(administrator=True)
 async def register(ctx, name, snowflake):
+    name = name.lower()
+
     logger.info(
         "%s invoked /register with name=%s and snowflake=%s",
         ctx.author.name,
         name,
         snowflake,
     )
+
+    if name == "everyone":
+        logger.info("'everyone' is a reserved name, doing nothing.")
+        await ctx.respond("You cannot register the name 'everyone'!")
+        return
 
     async with engine.connect() as conn:
         result = await conn.execute(select(pzsd_user).where(pzsd_user.c.name == name))
@@ -259,6 +274,8 @@ async def register(ctx, name, snowflake):
 @option("name", description="The exact name in the user table")
 @default_permissions(administrator=True)
 async def unregister(ctx, name):
+    name = name.lower()
+
     logger.info(
         "%s invoked /unregister with name=%s",
         ctx.author.name,
