@@ -223,6 +223,8 @@ async def leaderboard(ctx):
 @option("snowflake", description="Their discord ID if applicable.", required=False)
 @default_permissions(administrator=True)
 async def register(ctx, name, snowflake):
+    name = name.lower()
+
     logger.info(
         "%s invoked /register with name=%s and snowflake=%s",
         ctx.author.name,
@@ -267,6 +269,8 @@ async def register(ctx, name, snowflake):
 @option("name", description="The exact name in the user table")
 @default_permissions(administrator=True)
 async def unregister(ctx, name):
+    name = name.lower()
+
     logger.info(
         "%s invoked /unregister with name=%s",
         ctx.author.name,
