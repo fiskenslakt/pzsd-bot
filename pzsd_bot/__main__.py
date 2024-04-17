@@ -232,6 +232,11 @@ async def register(ctx, name, snowflake):
         snowflake,
     )
 
+    if name == "everyone":
+        logger.info("'everyone' is a reserved name, doing nothing.")
+        await ctx.respond("You cannot register the name 'everyone'!")
+        return
+
     async with engine.connect() as conn:
         result = await conn.execute(select(pzsd_user).where(pzsd_user.c.name == name))
 
