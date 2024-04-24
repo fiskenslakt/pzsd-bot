@@ -152,6 +152,7 @@ async def on_message(message):
                     ).where(
                         (pzsd_user.c.is_active == True)
                         & (pzsd_user.c.id != bestower.id)
+                        & (pzsd_user.c.discord_snowflake != None)
                     )
                     result = await conn.execute(
                         insert(ledger).from_select(
