@@ -44,7 +44,8 @@ bot = discord.Bot(intents=Intents.all())
 
 point_pattern = re.compile(
     r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
-    r"+points? (?:to|for) (?:(?P<recipient_name>[\w-]+)|<@(?P<recipient_id>\d+)>)",
+    r"+points? (?:to|for) "
+    r"(?:(?P<recipient_name>[\w-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
@@ -69,7 +70,7 @@ async def on_message(message):
     if match := point_pattern.search(message.content):
         point_amount = int(match["point_amount"].replace(",", ""))
         pretty_point_amount = format(point_amount, ",")
-        recipient_name = match["recipient_name"]
+        recipient_name = match["recipient_name"].strip('"')
         recipient_id = match["recipient_id"]
 
         async with engine.connect() as conn:
