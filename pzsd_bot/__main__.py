@@ -225,18 +225,22 @@ async def leaderboard(ctx):
 @option("snowflake", description="Their discord ID if applicable.", required=False)
 @default_permissions(administrator=True)
 async def register(ctx, name, snowflake):
-    name = name.lower()
+    name = name.lower().strip()
 
     logger.info(
-        "%s invoked /register with name=%s and snowflake=%s",
+        "%s invoked /register with name='%s' and snowflake=%s",
         ctx.author.name,
         name,
         snowflake,
     )
 
-    if name == "everyone":
-        logger.info("'everyone' is a reserved name, doing nothing.")
-        await ctx.respond("You cannot register the name 'everyone'!")
+    if re.match(r"(?:every|no)[ -]?(?:one|body)", name):
+        logger.info("'%s' is a reserved name, doing nothing.", name)
+        await ctx.respond(f"You cannot register the name '{name}'!")
+        return
+    elif not re.match(r"[\w '-]+", name):
+        logger.info("'%s' is an invalid name, doing nothing.", name)
+        await ctx.respond(f"{name} is an invalid name, try something else.")
         return
 
     async with engine.connect() as conn:
