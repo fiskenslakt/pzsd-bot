@@ -44,7 +44,8 @@ bot = discord.Bot(intents=Intents.all())
 
 point_pattern = re.compile(
     r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
-    r"+points? (?:to|for) (?:(?P<recipient_name>[\w-]+)|<@(?P<recipient_id>\d+)>)",
+    r"+points? (?:to|for) "
+    r"(?:(?P<recipient_name>[\w-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
@@ -69,7 +70,7 @@ async def on_message(message):
     if match := point_pattern.search(message.content):
         point_amount = int(match["point_amount"].replace(",", ""))
         pretty_point_amount = format(point_amount, ",")
-        recipient_name = match["recipient_name"]
+        recipient_name = match["recipient_name"].strip('"')
         recipient_id = match["recipient_id"]
 
         async with engine.connect() as conn:
@@ -224,18 +225,22 @@ async def leaderboard(ctx):
 @option("snowflake", description="Their discord ID if applicable.", required=False)
 @default_permissions(administrator=True)
 async def register(ctx, name, snowflake):
-    name = name.lower()
+    name = name.lower().strip()
 
     logger.info(
-        "%s invoked /register with name=%s and snowflake=%s",
+        "%s invoked /register with name='%s' and snowflake=%s",
         ctx.author.name,
         name,
         snowflake,
     )
 
-    if name == "everyone":
-        logger.info("'everyone' is a reserved name, doing nothing.")
-        await ctx.respond("You cannot register the name 'everyone'!")
+    if re.match(r"(?:every|no)[ -]?(?:one|body)", name):
+        logger.info("'%s' is a reserved name, doing nothing.", name)
+        await ctx.respond(f"You cannot register the name '{name}'!")
+        return
+    elif not re.match(r"[\w '-]+", name):
+        logger.info("'%s' is an invalid name, doing nothing.", name)
+        await ctx.respond(f"{name} is an invalid name, try something else.")
         return
 
     async with engine.connect() as conn:
