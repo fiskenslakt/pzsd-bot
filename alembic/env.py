@@ -1,15 +1,13 @@
 import asyncio
-import os
 from logging.config import fileConfig
 
 from alembic import context
-from dotenv import load_dotenv
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from pzsd_bot.settings import DB_CONNECTION_STR
 from pzsd_bot.model import metadata
 
-load_dotenv()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -32,16 +30,6 @@ target_metadata = metadata
 # ... etc.
 
 
-def get_url():
-    return "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
-        os.getenv("PGUSER", "postgres"),
-        os.getenv("PGPASSWORD", "password"),
-        os.getenv("PGHOST", "localhost"),
-        os.getenv("PGPORT", "5432"),
-        os.getenv("PGDATABASE", "pzsd"),
-    )
-
-
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -54,7 +42,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = get_url()
+    url = DB_CONNECTION_STR
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -84,7 +72,7 @@ async def run_async_migrations() -> None:
     #     prefix="sqlalchemy.",
     #     poolclass=pool.NullPool,
     # )
-    connectable = create_async_engine(get_url())
+    connectable = create_async_engine(DB_CONNECTION_STR)
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
