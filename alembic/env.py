@@ -5,7 +5,7 @@ from alembic import context
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
-from pzsd_bot.constants import DB_CONNECTION_STR
+from pzsd_bot.settings import DB_CONNECTION_STR
 from pzsd_bot.model import metadata
 
 

@@ -2,7 +2,7 @@ import logging
 from logging import handlers
 from pathlib import Path
 
-from pzsd_bot.constants import Bot
+from pzsd_bot.settings import Bot
 
 logger = logging.getLogger()
 logger.setLevel(Bot.log_level)

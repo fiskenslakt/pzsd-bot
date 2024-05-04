@@ -9,7 +9,7 @@ from discord.ext.commands import Cog, slash_command
 from sqlalchemy import insert, select, text, update
 from sqlalchemy.sql.functions import sum as sql_sum
 
-from pzsd_bot.constants import POINT_MAX_VALUE, POINT_MIN_VALUE, Channels, Colors
+from pzsd_bot.settings import POINT_MAX_VALUE, POINT_MIN_VALUE, Channels, Colors
 from pzsd_bot.db import Session
 from pzsd_bot.model import ledger, pzsd_user
 

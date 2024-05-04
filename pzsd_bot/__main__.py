@@ -4,7 +4,7 @@ import logging
 import discord
 from discord import Intents
 
-from pzsd_bot.constants import Bot
+from pzsd_bot.settings import Bot
 from pzsd_bot.db import engine
 
 logger = logging.getLogger(__name__)
