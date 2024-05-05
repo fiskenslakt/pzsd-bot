@@ -39,13 +39,7 @@ class _DB(EnvConfig):
 
 DB = _DB()
 
-DB_CONNECTION_STR = "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
-    DB.pguser,
-    DB.pgpassword,
-    DB.pghost,
-    DB.pgport,
-    DB.pgdatabase,
-)
+DB_CONNECTION_STR = f"postgresql+asyncpg://{DB.pguser}:{DB.pgpassword}@{DB.pghost}:{DB.pgport}/{DB.pgdatabase}"
 
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE
