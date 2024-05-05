@@ -24,9 +24,9 @@ Channels = _Channels()
 
 
 class Colors(Enum):
-    white = 0xFFFFFF
-    red = 0xFF0000
-    yellowy = 0xA8A434
+    white: int = 0xFFFFFF
+    red: int = 0xFF0000
+    yellowy: int = 0xA8A434
 
 
 class _DB(EnvConfig):
