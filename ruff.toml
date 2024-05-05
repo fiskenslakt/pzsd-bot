@@ -8,4 +8,4 @@ ignore = ["E711", "E712", "ANN101", "ANN102", "ANN201", "ANN204"]
 # sort imports
 # enforce type annotations
 # enforce non-blocking calls in async functions
-select = ["I", "ANN", "ASYNC"]
+extend-select = ["I", "ANN", "ASYNC"]
