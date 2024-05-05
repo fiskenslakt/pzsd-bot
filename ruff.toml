@@ -1,3 +1,7 @@
+exclude = ["alembic"]
+
 [lint]
 # ignore equality comparisons to `True` and `None`
 ignore = ["E711", "E712"]
+# sort imports
+select = ["I"]
