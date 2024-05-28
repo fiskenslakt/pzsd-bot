@@ -36,8 +36,6 @@ class Points(Cog):
         if message.author == self.bot.user:
             return
 
-        recipient_name = recipient_id = None
-
         if match := POINT_PATTERN.search(message.content):
             recipient_name = match["recipient_name"]
             if recipient_name is not None:
@@ -48,6 +46,7 @@ class Points(Cog):
             # message wasn't cached, make api call
             if original_message is None:
                 original_message = await message.channel.fetch_message(message.reference.message_id)
+            recipient_name = None
             recipient_id = str(original_message.author.id)
         else:
             return
