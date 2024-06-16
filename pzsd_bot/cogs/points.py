@@ -41,11 +41,15 @@ class Points(Cog):
             if recipient_name is not None:
                 recipient_name = recipient_name.strip('"')
             recipient_id = match["recipient_id"]
-        elif message.reference and (match := REPLY_POINT_PATTERN.fullmatch(message.content)):
+        elif message.reference and (
+            match := REPLY_POINT_PATTERN.fullmatch(message.content)
+        ):
             original_message = self.bot.get_message(message.reference.message_id)
             # message wasn't cached, make api call
             if original_message is None:
-                original_message = await message.channel.fetch_message(message.reference.message_id)
+                original_message = await message.channel.fetch_message(
+                    message.reference.message_id
+                )
             recipient_name = None
             recipient_id = str(original_message.author.id)
         else:
@@ -82,9 +86,7 @@ class Points(Cog):
 
             if not is_to_everyone:
                 result = await session.execute(
-                    select(pzsd_user).where(
-                        condition & pzsd_user.c.is_active == True
-                    )
+                    select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
                 )
 
                 recipient = result.one_or_none()
@@ -109,9 +111,7 @@ class Points(Cog):
             )
             return
 
-        self_point_violation = (
-            is_to_everyone is False and bestower.id == recipient.id
-        )
+        self_point_violation = is_to_everyone is False and bestower.id == recipient.id
         if not self_point_violation:
             logger.info(
                 "%s awarding %s point(s) to %s",
@@ -176,9 +176,7 @@ class Points(Cog):
         message_content = message.content
         if len(message_content) > 80:
             message_content = message_content[:80] + "\N{HORIZONTAL ELLIPSIS}"
-        embed.add_field(
-            name="Content of message:", value=message_content, inline=False
-        )
+        embed.add_field(name="Content of message:", value=message_content, inline=False)
 
         points_log_channel = self.bot.get_channel(Channels.points_log)
         await points_log_channel.send(embed=embed)
