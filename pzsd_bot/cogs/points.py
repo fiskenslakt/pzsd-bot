@@ -1,12 +1,14 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
+from typing import Optional
 
 import discord
-from discord import ApplicationContext, Bot, Message, default_permissions
-from discord.commands import option
+from discord import ApplicationContext, Bot, Embed, Message, default_permissions
+from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog, slash_command
 from sqlalchemy import insert, select, text, update
+from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import sum as sql_sum
 
 from pzsd_bot.db import Session
@@ -28,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 
 class Points(Cog):
+    leaderboard = SlashCommandGroup("leaderboard", "Display point leaderboards.")
+
     def __init__(self, bot: Bot):
         self.bot = bot
 
@@ -181,8 +185,9 @@ class Points(Cog):
         points_log_channel = self.bot.get_channel(Channels.points_log)
         await points_log_channel.send(embed=embed)
 
-    @slash_command(description="Display everyone's points in descending order.")
-    async def leaderboard(self, ctx: ApplicationContext) -> None:
+    async def fetch_leaderboard(
+        self, *args: list[BinaryExpression]
+    ) -> list[tuple[str, int]]:
         async with Session.begin() as session:
             j = ledger.join(
                 pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True
@@ -191,17 +196,48 @@ class Points(Cog):
                 select(pzsd_user.c.name, sql_sum(ledger.c.points))
                 .select_from(j)
                 .where(pzsd_user.c.is_active == True)
+                .where(*args)
                 .group_by(pzsd_user.c.id)
             )
-            points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
+            leaderboard = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
 
-        embed = discord.Embed(title="Points Leaderboard", colour=Colors.yellowy.value)
-        for i, (name, point_total) in enumerate(points, 1):
-            name = name.capitalize()
+        return leaderboard
+
+    def make_leaderboard_embed(
+        self,
+        title: str,
+        leaderboard: list[tuple[str, int]],
+        description: Optional[str] = None,
+    ) -> Embed:
+        embed = Embed(title=title, description=description, colour=Colors.yellowy.value)
+        for i, (name, point_total) in enumerate(leaderboard, 1):
+            # title case name by only capitalizing
+            # words separated by hyphen or space
+            name = "".join(map(str.capitalize, re.split(r"( |-)", name)))
             point_total = int(point_total)  # avoid scientific notation
             embed.add_field(
                 name=f"{i}. {name}", value=f"{point_total:,} points", inline=False
             )
+
+        return embed
+
+    @leaderboard.command(description="Display points awarded in the last 7 days.")
+    async def weekly(self, ctx: ApplicationContext) -> None:
+        last_week = datetime.now() - timedelta(days=7)
+        leaderboard = await self.fetch_leaderboard(ledger.c.created_at > last_week)
+        description = "Points awarded after " + last_week.strftime("%a %b %-d %-I:%M%p")
+        embed = self.make_leaderboard_embed(
+            "Weekly Points Leaderboard", leaderboard, description=description
+        )
+
+        await ctx.respond(embed=embed)
+
+    @leaderboard.command(
+        description="Display total points awarded from the beginning of time."
+    )
+    async def total(self, ctx: ApplicationContext) -> None:
+        leaderboard = await self.fetch_leaderboard()
+        embed = self.make_leaderboard_embed("All Time Points Leaderboard", leaderboard)
 
         await ctx.respond(embed=embed)
 
