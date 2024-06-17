@@ -210,13 +210,13 @@ class Points(Cog):
         description: Optional[str] = None,
     ) -> Embed:
         embed = Embed(title=title, description=description, colour=Colors.yellowy.value)
-        for i, (name, point_total) in enumerate(leaderboard, 1):
+        for rank, (name, point_total) in enumerate(leaderboard, 1):
             # title case name by only capitalizing
             # words separated by hyphen or space
             name = "".join(map(str.capitalize, re.split(r"( |-)", name)))
             point_total = int(point_total)  # avoid scientific notation
             embed.add_field(
-                name=f"{i}. {name}", value=f"{point_total:,} points", inline=False
+                name=f"{rank}. {name}", value=f"{point_total:,} points", inline=False
             )
 
         return embed
