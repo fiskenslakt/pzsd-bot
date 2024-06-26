@@ -18,7 +18,7 @@ from pzsd_bot.settings import POINT_MAX_VALUE, POINT_MIN_VALUE, Channels, Colors
 POINT_PATTERN = re.compile(
     r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
     r"+points? (?:to|for) "
-    r"(?:(?P<recipient_name>[\w-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
+    r"(?:(?P<recipient_name>[\w'-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
@@ -257,11 +257,11 @@ class Points(Cog):
             snowflake,
         )
 
-        if re.match(r"(?:every|no)[ -]?(?:one|body)", name):
+        if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)", name):
             logger.info("'%s' is a reserved name, doing nothing.", name)
             await ctx.respond(f"You cannot register the name '{name}'!")
             return
-        elif not re.match(r"[\w '-]+", name):
+        elif not re.fullmatch(r"[\w '-]+", name):
             logger.info("'%s' is an invalid name, doing nothing.", name)
             await ctx.respond(f"{name} is an invalid name, try something else.")
             return
