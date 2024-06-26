@@ -257,11 +257,11 @@ class Points(Cog):
             snowflake,
         )
 
-        if re.match(r"(?:every|no)[ -]?(?:one|body)", name):
+        if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)", name):
             logger.info("'%s' is a reserved name, doing nothing.", name)
             await ctx.respond(f"You cannot register the name '{name}'!")
             return
-        elif not re.match(r"[\w '-]+", name):
+        elif not re.fullmatch(r"[\w '-]+", name):
             logger.info("'%s' is an invalid name, doing nothing.", name)
             await ctx.respond(f"{name} is an invalid name, try something else.")
             return
