@@ -18,7 +18,7 @@ from pzsd_bot.settings import POINT_MAX_VALUE, POINT_MIN_VALUE, Channels, Colors
 POINT_PATTERN = re.compile(
     r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
     r"+points? (?:to|for) "
-    r"(?:(?P<recipient_name>[\w-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
+    r"(?:(?P<recipient_name>[\w'-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
     re.IGNORECASE,
 )
 
