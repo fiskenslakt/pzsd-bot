@@ -246,7 +246,7 @@ class Points(Cog):
     @option("snowflake", description="Their discord ID if applicable.", required=False)
     @default_permissions(administrator=True)
     async def register(
-        self, ctx: ApplicationContext, name: str, snowflake: int
+        self, ctx: ApplicationContext, name: str, snowflake: str
     ) -> None:
         name = name.lower().strip()
 
