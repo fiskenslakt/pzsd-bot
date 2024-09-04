@@ -23,7 +23,8 @@ POINT_PATTERN = re.compile(
 )
 
 REPLY_POINT_PATTERN = re.compile(
-    r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?"
+    r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?",
+    re.IGNORECASE,
 )
 
 logger = logging.getLogger(__name__)
