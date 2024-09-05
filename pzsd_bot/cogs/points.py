@@ -23,7 +23,8 @@ POINT_PATTERN = re.compile(
 )
 
 REPLY_POINT_PATTERN = re.compile(
-    r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?"
+    r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?",
+    re.IGNORECASE,
 )
 
 logger = logging.getLogger(__name__)
@@ -46,7 +47,7 @@ class Points(Cog):
                 recipient_name = recipient_name.strip('"')
             recipient_id = match["recipient_id"]
         elif message.reference and (
-            match := REPLY_POINT_PATTERN.fullmatch(message.content)
+            match := REPLY_POINT_PATTERN.search(message.content)
         ):
             original_message = self.bot.get_message(message.reference.message_id)
             # message wasn't cached, make api call
