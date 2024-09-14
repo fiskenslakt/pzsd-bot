@@ -1,12 +1,14 @@
 import logging
 import re
 from datetime import datetime, timedelta
-from typing import Optional
+from itertools import islice
+from typing import Iterable, Optional, Tuple
 
 import discord
 from discord import ApplicationContext, Bot, Embed, Message, default_permissions
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog, slash_command
+from discord.ext.pages import Paginator, PaginatorButton
 from sqlalchemy import insert, select, text, update
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import sum as sql_sum
@@ -29,12 +31,26 @@ REPLY_POINT_PATTERN = re.compile(
 
 logger = logging.getLogger(__name__)
 
+LeaderboardField = Tuple[int, str, int]
+
 
 class Points(Cog):
     leaderboard = SlashCommandGroup("leaderboard", "Display point leaderboards.")
 
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    @property
+    def page_buttons(self) -> list[PaginatorButton]:
+        return [
+            PaginatorButton("first", label="<<", style=discord.ButtonStyle.blurple),
+            PaginatorButton("prev", label="←", style=discord.ButtonStyle.blurple),
+            PaginatorButton(
+                "page_indicator", style=discord.ButtonStyle.gray, disabled=True
+            ),
+            PaginatorButton("next", label="→", style=discord.ButtonStyle.blurple),
+            PaginatorButton("last", label=">>", style=discord.ButtonStyle.blurple),
+        ]
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
@@ -187,8 +203,14 @@ class Points(Cog):
         await points_log_channel.send(embed=embed)
 
     async def fetch_leaderboard(
-        self, *args: list[BinaryExpression]
-    ) -> list[tuple[str, int]]:
+        self, *args: list[BinaryExpression], paginate: bool = True, page_size: int = 10
+    ) -> list[LeaderboardField] | list[tuple[LeaderboardField, ...]]:
+        logger.info(
+            "Fetching leaderboard with paginate=%s and page_size=%s",
+            paginate,
+            page_size,
+        )
+
         async with Session.begin() as session:
             j = ledger.join(
                 pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True
@@ -200,18 +222,32 @@ class Points(Cog):
                 .where(*args)
                 .group_by(pzsd_user.c.id)
             )
-            leaderboard = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
+            sorted_points = sorted(result.fetchall(), key=lambda r: r.sum, reverse=True)
+
+        logger.info("Leaderboard length is %s", len(sorted_points))
+
+        leaderboard = [
+            (rank, name, points) for rank, (name, points) in enumerate(sorted_points, 1)
+        ]
+
+        if paginate:
+            iterator = iter(leaderboard)
+            leaderboard = []
+            while chunk := tuple(islice(iterator, page_size)):
+                leaderboard.append(chunk)
+
+            logger.info("Leaderboard has %s pages", len(leaderboard))
 
         return leaderboard
 
     def make_leaderboard_embed(
         self,
         title: str,
-        leaderboard: list[tuple[str, int]],
+        leaderboard: Iterable[LeaderboardField],
         description: Optional[str] = None,
     ) -> Embed:
         embed = Embed(title=title, description=description, colour=Colors.yellowy.value)
-        for rank, (name, point_total) in enumerate(leaderboard, 1):
+        for rank, name, point_total in leaderboard:
             # title case name by only capitalizing
             # words separated by hyphen or space
             name = "".join(map(str.capitalize, re.split(r"( |-)", name)))
@@ -224,23 +260,51 @@ class Points(Cog):
 
     @leaderboard.command(description="Display points awarded in the last 7 days.")
     async def weekly(self, ctx: ApplicationContext) -> None:
+        logger.info("`/leaderboard weekly` invoked by %s", ctx.author.name)
+
         last_week = datetime.now() - timedelta(days=7)
         leaderboard = await self.fetch_leaderboard(ledger.c.created_at > last_week)
         description = "Points awarded after " + last_week.strftime("%a %b %-d %-I:%M%p")
-        embed = self.make_leaderboard_embed(
-            "Weekly Points Leaderboard", leaderboard, description=description
+
+        pages = []
+        for lb_chunk in leaderboard:
+            embed = self.make_leaderboard_embed(
+                "Weekly Points Leaderboard", lb_chunk, description=description
+            )
+            pages.append(embed)
+
+        paginator = Paginator(
+            pages=pages,
+            disable_on_timeout=False,
+            author_check=False,
+            use_default_buttons=False,
+            custom_buttons=self.page_buttons,
         )
 
-        await ctx.respond(embed=embed)
+        await paginator.respond(ctx.interaction)
 
     @leaderboard.command(
         description="Display total points awarded from the beginning of time."
     )
     async def total(self, ctx: ApplicationContext) -> None:
-        leaderboard = await self.fetch_leaderboard()
-        embed = self.make_leaderboard_embed("All Time Points Leaderboard", leaderboard)
+        logger.info("`/leaderboard total` invoked by %s", ctx.author.name)
 
-        await ctx.respond(embed=embed)
+        leaderboard = await self.fetch_leaderboard()
+
+        pages = []
+        for lb_chunk in leaderboard:
+            embed = self.make_leaderboard_embed("All Time Points Leaderboard", lb_chunk)
+            pages.append(embed)
+
+        paginator = Paginator(
+            pages=pages,
+            disable_on_timeout=False,
+            author_check=False,
+            use_default_buttons=False,
+            custom_buttons=self.page_buttons,
+        )
+
+        await paginator.respond(ctx.interaction)
 
     @slash_command(description="Add new name that can be bestowed points.")
     @option("name", description="The exact name to use when bestowing points.")
