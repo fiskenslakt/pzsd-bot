@@ -181,6 +181,7 @@ class Points(Cog):
                         (pzsd_user.c.is_active == True)
                         & (pzsd_user.c.id != bestower.id)
                         & (pzsd_user.c.discord_snowflake != None)
+                        & (pzsd_user.c.point_giver == True)
                     )
                     result = await session.execute(
                         insert(ledger).from_select(
