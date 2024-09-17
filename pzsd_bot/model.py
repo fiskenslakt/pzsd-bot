@@ -27,6 +27,7 @@ pzsd_user = Table(
     Column("discord_snowflake", Text, nullable=True, unique=True),
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
     Column("is_active", Boolean, nullable=False, server_default=text("true")),
+    Column("point_giver", Boolean, nullable=False, server_default=text("false")),
 )
 
 ledger = Table(
