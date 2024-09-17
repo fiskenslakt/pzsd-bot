@@ -82,10 +82,8 @@ class Points(Cog):
 
         async with Session.begin() as session:
             result = await session.execute(
-                select(pzsd_user).where(
-                    (pzsd_user.c.discord_snowflake == str(message.author.id))
-                    & (pzsd_user.c.is_active == True)
-                )
+                select(pzsd_user)
+                .where(pzsd_user.c.discord_snowflake == str(message.author.id))
             )
 
             bestower = result.one_or_none()
@@ -95,6 +93,20 @@ class Points(Cog):
                     "User '%s' with snowflake '%s' tried to bestow points but wasn't in the user table",
                     message.author.name,
                     message.author.id,
+                )
+                return
+
+            if not bestower.is_active:
+                logger.info(
+                    "User '%s' with snowflake '%s' tried to bestow points but is currently inactive",
+                    message.author.name,
+                    message.author.id,
+                )
+                return
+
+            if not bestower.point_giver:
+                logger.info(
+                    "User '%s' with snowflake '%s' tried to bestow points but isn't a point giver"
                 )
                 return
 
@@ -108,7 +120,7 @@ class Points(Cog):
 
             if not is_to_everyone:
                 result = await session.execute(
-                    select(pzsd_user).where(condition & pzsd_user.c.is_active == True)
+                    select(pzsd_user).where(condition)
                 )
 
                 recipient = result.one_or_none()
@@ -116,6 +128,14 @@ class Points(Cog):
                 if recipient is None:
                     logger.info(
                         "%s tried to bestow points to '%s' but they weren't in the user table",
+                        bestower.name,
+                        recipient_name or recipient_id,
+                    )
+                    return
+
+                if not recipient.is_active:
+                    logger.info(
+                        "%s tried to bestow points to '%s' but they were inactive",
                         bestower.name,
                         recipient_name or recipient_id,
                     )
