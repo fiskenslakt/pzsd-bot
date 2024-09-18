@@ -332,7 +332,7 @@ class Points(Cog):
     async def register(
         self, ctx: ApplicationContext, name: str, snowflake: str
     ) -> None:
-        name = name.lower().strip()
+        name = name.lower().strip("\"' \n\t")
 
         logger.info(
             "%s invoked /register with name='%s' and snowflake=%s",
@@ -388,7 +388,7 @@ class Points(Cog):
     @option("name", description="The exact name in the user table")
     @default_permissions(administrator=True)
     async def unregister(self, ctx: ApplicationContext, name: str) -> None:
-        name = name.lower()
+        name = name.lower().strip("\"' \n\t")
 
         logger.info(
             "%s invoked /unregister with name=%s",
