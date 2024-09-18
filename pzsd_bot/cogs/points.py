@@ -328,17 +328,24 @@ class Points(Cog):
     @slash_command(description="Add new name that can be bestowed points.")
     @option("name", description="The exact name to use when bestowing points.")
     @option("snowflake", description="Their discord ID if applicable.", required=False)
+    @option(
+        "point_giver",
+        description="Determines if this user can bestow points.",
+        default=False,
+        choices=[True, False],
+    )
     @default_permissions(administrator=True)
     async def register(
-        self, ctx: ApplicationContext, name: str, snowflake: str
+        self, ctx: ApplicationContext, name: str, snowflake: str, point_giver: bool
     ) -> None:
         name = name.lower().strip("\"' \n\t")
 
         logger.info(
-            "%s invoked /register with name='%s' and snowflake=%s",
+            "%s invoked /register with name='%s' snowflake=%s point_giver=%s",
             ctx.author.name,
             name,
             snowflake,
+            point_giver,
         )
 
         if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)", name):
@@ -367,7 +374,11 @@ class Points(Cog):
                     await session.execute(
                         update(pzsd_user)
                         .where(pzsd_user.c.name == name)
-                        .values(is_active=True, discord_snowflake=snowflake)
+                        .values(
+                            is_active=True,
+                            discord_snowflake=snowflake,
+                            point_giver=point_giver,
+                        )
                     )
                 logger.info("Reactivated user '%s' in user table", name)
                 await ctx.respond(f"Reactivated user with name {name}")
@@ -377,6 +388,7 @@ class Points(Cog):
                     insert(pzsd_user).values(
                         name=name,
                         discord_snowflake=snowflake,
+                        point_giver=point_giver,
                     )
                 )
             logger.info("Added user '%s' to user table", name)
