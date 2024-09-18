@@ -283,7 +283,7 @@ class Points(Cog):
 
         last_week = datetime.now() - timedelta(days=7)
         leaderboard = await self.fetch_leaderboard(ledger.c.created_at > last_week)
-        description = "Points awarded after " + last_week.strftime("%a %b %-d %-I:%M%p")
+        description = "Points awarded after " + f"<t:{int(last_week.timestamp())}:f>"
 
         pages = []
         for lb_chunk in leaderboard:
