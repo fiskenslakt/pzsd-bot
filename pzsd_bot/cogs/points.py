@@ -82,8 +82,9 @@ class Points(Cog):
 
         async with Session.begin() as session:
             result = await session.execute(
-                select(pzsd_user)
-                .where(pzsd_user.c.discord_snowflake == str(message.author.id))
+                select(pzsd_user).where(
+                    pzsd_user.c.discord_snowflake == str(message.author.id)
+                )
             )
 
             bestower = result.one_or_none()
@@ -119,9 +120,7 @@ class Points(Cog):
                 condition = pzsd_user.c.name == recipient_name.lower()
 
             if not is_to_everyone:
-                result = await session.execute(
-                    select(pzsd_user).where(condition)
-                )
+                result = await session.execute(select(pzsd_user).where(condition))
 
                 recipient = result.one_or_none()
 
