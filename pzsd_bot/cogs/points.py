@@ -1,7 +1,8 @@
 import logging
 import re
 from datetime import datetime, timedelta
-from itertools import islice
+from itertools import batched
+from math import ceil
 from typing import Iterable, Optional, Tuple
 
 import discord
@@ -204,7 +205,7 @@ class Points(Cog):
 
     async def fetch_leaderboard(
         self, *args: list[BinaryExpression], paginate: bool = True, page_size: int = 10
-    ) -> list[LeaderboardField] | list[tuple[LeaderboardField, ...]]:
+    ) -> Iterable[LeaderboardField] | Iterable[tuple[LeaderboardField, ...]]:
         logger.info(
             "Fetching leaderboard with paginate=%s and page_size=%s",
             paginate,
@@ -226,17 +227,15 @@ class Points(Cog):
 
         logger.info("Leaderboard length is %s", len(sorted_points))
 
-        leaderboard = [
+        leaderboard = (
             (rank, name, points) for rank, (name, points) in enumerate(sorted_points, 1)
-        ]
+        )
 
         if paginate:
-            iterator = iter(leaderboard)
-            leaderboard = []
-            while chunk := tuple(islice(iterator, page_size)):
-                leaderboard.append(chunk)
-
-            logger.info("Leaderboard has %s pages", len(leaderboard))
+            leaderboard = batched(leaderboard, page_size)
+            logger.info(
+                "Leaderboard has %s pages", ceil(len(sorted_points) / page_size)
+            )
 
         return leaderboard
 
