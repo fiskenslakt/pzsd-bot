@@ -424,19 +424,35 @@ class Points(Cog):
     @slash_command(description="Show user table.")
     @default_permissions(administrator=True)
     async def users(self, ctx: ApplicationContext) -> None:
-        logger.debug("%s invoked /users", ctx.author.name)
+        logger.info("%s invoked /users", ctx.author.name)
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.is_active == True)
-            )
+            users = await session.execute(select(pzsd_user))
 
-        embed = discord.Embed()
+        pages = []
 
-        for row in result:
-            embed.add_field(name=row.name, value=row.discord_snowflake or "N/A")
+        for page in batched(sorted(users, key=lambda u: u.name), 5):
+            embed = Embed(title="User List")
+            for user in page:
+                value = "Snowflake: {}\nActive: {}\nPoint Giver: {}\nCreated: <t:{}:f>"
+                value = value.format(
+                    user.discord_snowflake or "N/A",
+                    user.is_active,
+                    user.point_giver,
+                    int(user.created_at.timestamp()),
+                )
+                embed.add_field(name=user.name, value=value, inline=False)
+            pages.append(embed)
 
-        await ctx.respond(embed=embed)
+        paginator = Paginator(
+            pages=pages,
+            disable_on_timeout=False,
+            author_check=True,
+            use_default_buttons=False,
+            custom_buttons=self.page_buttons,
+        )
+
+        await paginator.respond(ctx.interaction)
 
 
 def setup(bot: Bot) -> None:
