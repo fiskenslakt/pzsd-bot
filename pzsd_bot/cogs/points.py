@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime, timedelta
+from enum import Enum, auto
 from itertools import batched
 from math import ceil
 from typing import Iterable, Optional, Tuple
@@ -35,6 +36,12 @@ logger = logging.getLogger(__name__)
 LeaderboardField = Tuple[int, str, int]
 
 
+class NameState(Enum):
+    VALID_NAME = auto()
+    INVALID_NAME = auto()
+    RESERVED_NAME = auto()
+
+
 class Points(Cog):
     leaderboard = SlashCommandGroup("leaderboard", "Display point leaderboards.")
 
@@ -52,6 +59,13 @@ class Points(Cog):
             PaginatorButton("next", label="→", style=discord.ButtonStyle.blurple),
             PaginatorButton("last", label=">>", style=discord.ButtonStyle.blurple),
         ]
+
+    def validate_name(self, name: str) -> Enum:
+        if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)|me", name):
+            return NameState.RESERVED_NAME
+        elif not re.fullmatch(r"[\w '-]+", name):
+            return NameState.INVALID_NAME
+        return NameState.VALID_NAME
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
