@@ -531,6 +531,72 @@ class Points(Cog):
         logger.info("Renamed user '%s' to '%s'", user, name)
         await ctx.respond(f"Renamed {user} to {name}")
 
+    @slash_command(description="Endow user with point giving abilities.")
+    @option("user", description="User in user table to endow.")
+    @default_permissions(administrator=True)
+    async def endow(self, ctx: ApplicationContext, user: str) -> None:
+        user = user.lower().strip("\"' \n\t")
+
+        logger.info(
+            "%s invoked /endow with user='%s'",
+            ctx.author.name,
+            user,
+        )
+
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(pzsd_user).where(pzsd_user.c.name == user)
+            )
+
+        user_to_endow = result.one_or_none()
+        if user_to_endow is None:
+            logger.info("User '%s' doesn't exist in user table, doing nothing", user)
+            await ctx.respond(f"User '{user}' doesn't exist!")
+            return
+
+        async with Session.begin() as session:
+            await session.execute(
+                update(pzsd_user)
+                .where(pzsd_user.c.id == user_to_endow.id)
+                .values(point_giver=True)
+            )
+
+        logger.info("Endowed user '%s' with point giving abilities", user)
+        await ctx.respond(f"Endowed {user} with point giving abilities.")
+
+    @slash_command(description="Remove user's ability to give points.")
+    @option("user", description="User in user table to disendow.")
+    @default_permissions(administrator=True)
+    async def disendow(self, ctx: ApplicationContext, user: str) -> None:
+        user = user.lower().strip("\"' \n\t")
+
+        logger.info(
+            "%s invoked /disendow with user='%s'",
+            ctx.author.name,
+            user,
+        )
+
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(pzsd_user).where(pzsd_user.c.name == user)
+            )
+
+        user_to_disendow = result.one_or_none()
+        if user_to_disendow is None:
+            logger.info("User '%s' doesn't exist in user table, doing nothing", user)
+            await ctx.respond(f"User '{user}' doesn't exist!")
+            return
+
+        async with Session.begin() as session:
+            await session.execute(
+                update(pzsd_user)
+                .where(pzsd_user.c.id == user_to_disendow.id)
+                .values(point_giver=False)
+            )
+
+        logger.info("Removed ability to give points from user '%s'", user)
+        await ctx.respond(f"Disendowed {user}")
+
 
 def setup(bot: Bot) -> None:
     bot.add_cog(Points(bot))
