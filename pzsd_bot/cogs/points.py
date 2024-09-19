@@ -482,6 +482,53 @@ class Points(Cog):
 
         await paginator.respond(ctx.interaction)
 
+    @slash_command(description="Rename user in user table.")
+    @option("user", description="User in user table to rename.")
+    @option("name", description="Name to give user.")
+    @default_permissions(administrator=True)
+    async def rename(self, ctx: ApplicationContext, user: str, name: str) -> None:
+        user = user.lower().strip("\"' \n\t")
+        name = name.lower().strip("\"' \n\t")
+
+        logger.info(
+            "%s invoked /rename with user='%s' name='%s'",
+            ctx.author.name,
+            user,
+            name,
+        )
+
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(pzsd_user).where(pzsd_user.c.name == user)
+            )
+
+        user_to_rename = result.one_or_none()
+        if user_to_rename is None:
+            logger.info("User '%s' doesn't exist in user table, doing nothing", user)
+            await ctx.respond(f"User '{user}' doesn't exist!")
+            return
+
+        name_state = self.validate_name(name)
+
+        if name_state is NameState.RESERVED_NAME:
+            logger.info("'%s' is a reserved name, doing nothing.", name)
+            await ctx.respond(f"You cannot use the name '{name}'!")
+            return
+        elif name_state is NameState.INVALID_NAME:
+            logger.info("'%s' is an invalid name, doing nothing.", name)
+            await ctx.respond(f"{name} is an invalid name, try something else.")
+            return
+
+        async with Session.begin() as session:
+            await session.execute(
+                update(pzsd_user)
+                .where(pzsd_user.c.id == user_to_rename.id)
+                .values(name=name)
+            )
+
+        logger.info("Renamed user '%s' to '%s'", user, name)
+        await ctx.respond(f"Renamed {user} to {name}")
+
 
 def setup(bot: Bot) -> None:
     bot.add_cog(Points(bot))
