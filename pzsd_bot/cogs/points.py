@@ -114,14 +114,16 @@ class Points(Cog):
             if not bestower.is_active:
                 logger.info(
                     "User '%s' with snowflake '%s' tried to bestow points but is currently inactive",
-                    message.author.name,
-                    message.author.id,
+                    bestower.name,
+                    bestower.discord_snowflake,
                 )
                 return
 
             if not bestower.point_giver:
                 logger.info(
-                    "User '%s' with snowflake '%s' tried to bestow points but isn't a point giver"
+                    "User '%s' with snowflake '%s' tried to bestow points but isn't a point giver",
+                    bestower.name,
+                    bestower.discord_snowflake,
                 )
                 return
 
@@ -365,11 +367,11 @@ class Points(Cog):
         name_state = self.validate_name(name)
 
         if name_state is NameState.RESERVED_NAME:
-            logger.info("'%s' is a reserved name, doing nothing.", name)
+            logger.info("'%s' is a reserved name, doing nothing", name)
             await ctx.respond(f"You cannot register the name '{name}'!")
             return
         elif name_state is NameState.INVALID_NAME:
-            logger.info("'%s' is an invalid name, doing nothing.", name)
+            logger.info("'%s' is an invalid name, doing nothing", name)
             await ctx.respond(f"{name} is an invalid name, try something else.")
             return
 
@@ -511,11 +513,11 @@ class Points(Cog):
         name_state = self.validate_name(name)
 
         if name_state is NameState.RESERVED_NAME:
-            logger.info("'%s' is a reserved name, doing nothing.", name)
+            logger.info("'%s' is a reserved name, doing nothing", name)
             await ctx.respond(f"You cannot use the name '{name}'!")
             return
         elif name_state is NameState.INVALID_NAME:
-            logger.info("'%s' is an invalid name, doing nothing.", name)
+            logger.info("'%s' is an invalid name, doing nothing", name)
             await ctx.respond(f"{name} is an invalid name, try something else.")
             return
 
