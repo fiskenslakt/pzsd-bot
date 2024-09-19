@@ -362,11 +362,13 @@ class Points(Cog):
             point_giver,
         )
 
-        if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)", name):
+        name_state = self.validate_name(name)
+
+        if name_state is NameState.RESERVED_NAME:
             logger.info("'%s' is a reserved name, doing nothing.", name)
             await ctx.respond(f"You cannot register the name '{name}'!")
             return
-        elif not re.fullmatch(r"[\w '-]+", name):
+        elif name_state is NameState.INVALID_NAME:
             logger.info("'%s' is an invalid name, doing nothing.", name)
             await ctx.respond(f"{name} is an invalid name, try something else.")
             return
