@@ -112,7 +112,7 @@ class Points(Cog):
                 return
 
             if not bestower.is_active:
-                logger.info(
+                logger.warning(
                     "User '%s' with snowflake '%s' tried to bestow points but is currently inactive",
                     bestower.name,
                     bestower.discord_snowflake,
