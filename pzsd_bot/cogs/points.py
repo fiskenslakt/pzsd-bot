@@ -17,19 +17,15 @@ from sqlalchemy.sql.functions import sum as sql_sum
 
 from pzsd_bot.db import Session
 from pzsd_bot.model import ledger, pzsd_user
-from pzsd_bot.settings import POINT_MAX_VALUE, POINT_MIN_VALUE, Channels, Colors
-
-POINT_PATTERN = re.compile(
-    r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
-    r"+points? (?:to|for) "
-    r"(?:(?P<recipient_name>[\w'-]+|\"[\w '-]+\")|<@(?P<recipient_id>\d+)>)",
-    re.IGNORECASE,
+from pzsd_bot.settings import (
+    POINT_MAX_VALUE,
+    POINT_MIN_VALUE,
+    Channels,
+    Colors,
+    PointsSettings,
 )
 
-REPLY_POINT_PATTERN = re.compile(
-    r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?",
-    re.IGNORECASE,
-)
+EVERYONE_KEYWORD = "everyone"
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +35,7 @@ LeaderboardField = Tuple[int, str, int]
 class NameState(Enum):
     VALID_NAME = auto()
     INVALID_NAME = auto()
-    RESERVED_NAME = auto()
+    DISALLOWED_NAME = auto()
 
 
 class Points(Cog):
@@ -61,9 +57,9 @@ class Points(Cog):
         ]
 
     def validate_name(self, name: str) -> Enum:
-        if re.fullmatch(r"(?:every|no)[ -]?(?:one|body)|me", name):
-            return NameState.RESERVED_NAME
-        elif not re.fullmatch(r"[\w '-]+", name):
+        if name in PointsSettings.disallowed_names:
+            return NameState.DISALLOWED_NAME
+        elif not PointsSettings.valid_name_pattern.fullmatch(name):
             return NameState.INVALID_NAME
         return NameState.VALID_NAME
 
@@ -72,13 +68,13 @@ class Points(Cog):
         if message.author == self.bot.user:
             return
 
-        if match := POINT_PATTERN.search(message.content):
+        if match := PointsSettings.point_pattern.search(message.content):
             recipient_name = match["recipient_name"]
             if recipient_name is not None:
                 recipient_name = recipient_name.strip('"')
             recipient_id = match["recipient_id"]
         elif message.reference and (
-            match := REPLY_POINT_PATTERN.search(message.content)
+            match := PointsSettings.reply_point_pattern.search(message.content)
         ):
             original_message = self.bot.get_message(message.reference.message_id)
             # message wasn't cached, make api call
@@ -130,7 +126,7 @@ class Points(Cog):
             is_to_everyone = False
             if recipient_name is None:
                 condition = pzsd_user.c.discord_snowflake == recipient_id
-            elif recipient_name.lower() == "everyone":
+            elif recipient_name.lower() == EVERYONE_KEYWORD:
                 is_to_everyone = True
             else:
                 condition = pzsd_user.c.name == recipient_name.lower()
@@ -163,7 +159,7 @@ class Points(Cog):
             logger.info(
                 "%s tried to give %s more than the max allowed points (%s)",
                 bestower.name,
-                recipient.name if not is_to_everyone else "everyone",
+                recipient.name if not is_to_everyone else EVERYONE_KEYWORD,
                 pretty_point_amount,
             )
             return
@@ -174,7 +170,7 @@ class Points(Cog):
                 "%s awarding %s point(s) to %s",
                 bestower.name,
                 pretty_point_amount,
-                recipient.name if not is_to_everyone else "everyone",
+                recipient.name if not is_to_everyone else EVERYONE_KEYWORD,
             )
             if not is_to_everyone:
                 async with Session.begin() as session:
@@ -227,7 +223,7 @@ class Points(Cog):
         embed.add_field(name="Bestower", value=bestower.name, inline=True)
         embed.add_field(
             name="Recipient",
-            value=recipient.name if not is_to_everyone else "everyone",
+            value=recipient.name if not is_to_everyone else EVERYONE_KEYWORD,
             inline=True,
         )
         embed.add_field(name="Point amount", value=pretty_point_amount, inline=True)
@@ -366,8 +362,8 @@ class Points(Cog):
 
         name_state = self.validate_name(name)
 
-        if name_state is NameState.RESERVED_NAME:
-            logger.info("'%s' is a reserved name, doing nothing", name)
+        if name_state is NameState.DISALLOWED_NAME:
+            logger.info("The name '%s' is not allowed, doing nothing", name)
             await ctx.respond(f"You cannot register the name '{name}'!")
             return
         elif name_state is NameState.INVALID_NAME:
@@ -512,8 +508,8 @@ class Points(Cog):
 
         name_state = self.validate_name(name)
 
-        if name_state is NameState.RESERVED_NAME:
-            logger.info("'%s' is a reserved name, doing nothing", name)
+        if name_state is NameState.DISALLOWED_NAME:
+            logger.info("The name '%s' is not allowed, doing nothing", name)
             await ctx.respond(f"You cannot use the name '{name}'!")
             return
         elif name_state is NameState.INVALID_NAME:
