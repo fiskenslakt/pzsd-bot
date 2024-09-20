@@ -549,6 +549,10 @@ class Points(Cog):
             logger.info("User '%s' doesn't exist in user table, doing nothing", user)
             await ctx.respond(f"User '{user}' doesn't exist!")
             return
+        elif user_to_endow.point_giver:
+            logger.info("User '%s' is already a point giver, doing nothing", user)
+            await ctx.respond(f"{user} can already give points!")
+            return
 
         async with Session.begin() as session:
             await session.execute(
@@ -581,6 +585,10 @@ class Points(Cog):
         if user_to_disendow is None:
             logger.info("User '%s' doesn't exist in user table, doing nothing", user)
             await ctx.respond(f"User '{user}' doesn't exist!")
+            return
+        elif not user_to_disendow.point_giver:
+            logger.info("User '%s' isn't a point giver, doing nothing", user)
+            await ctx.respond(f"{user} isn't a point giver already!")
             return
 
         async with Session.begin() as session:
