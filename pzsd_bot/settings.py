@@ -4,11 +4,11 @@ from enum import Enum
 from pydantic_settings import BaseSettings
 
 
-class EnvConfig(BaseSettings, env_file=".env", extra="ignore"):
+class EnvSettings(BaseSettings, env_file=".env", extra="ignore"):
     """Default config to pull from .env file."""
 
 
-class _Bot(EnvConfig):
+class _Bot(EnvSettings):
     token: str
     log_level: str = "INFO"
 
@@ -16,7 +16,7 @@ class _Bot(EnvConfig):
 Bot = _Bot()
 
 
-class _Channels(EnvConfig):
+class _Channels(EnvSettings):
     # where point transactions get logged
     points_log: int = 1223525487578710016
 
@@ -30,7 +30,7 @@ class Colors(Enum):
     yellowy: int = 0xA8A434
 
 
-class _DB(EnvConfig):
+class _DB(EnvSettings):
     pguser: str = "postgres"
     pgpassword: str = "password"
     pghost: str = "localhost"
@@ -43,7 +43,7 @@ DB = _DB()
 DB_CONNECTION_STR = f"postgresql+asyncpg://{DB.pguser}:{DB.pgpassword}@{DB.pghost}:{DB.pgport}/{DB.pgdatabase}"
 
 
-class _PointsSettings(EnvConfig):
+class _PointsSettings(EnvSettings):
     disallowed_names: frozenset = frozenset(
         {
             "everyone",
