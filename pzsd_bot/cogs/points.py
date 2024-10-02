@@ -56,7 +56,7 @@ class Points(Cog):
             PaginatorButton("last", label=">>", style=discord.ButtonStyle.blurple),
         ]
 
-    def validate_name(self, name: str) -> Enum:
+    def validate_name(self, name: str) -> NameState:
         if name in PointsSettings.disallowed_names:
             return NameState.DISALLOWED_NAME
         elif not PointsSettings.valid_name_pattern.fullmatch(name):
