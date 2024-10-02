@@ -44,32 +44,34 @@ DB_CONNECTION_STR = f"postgresql+asyncpg://{DB.pguser}:{DB.pgpassword}@{DB.pghos
 
 
 class _PointsSettings(EnvConfig):
-    disallowed_names: set = {
-        "everyone",
-        "everybody",
-        "nobody",
-        "noone",
-        "no one",
-        "someone",
-        "something",
-        "anyone",
-        "anybody",
-        "anything",
-        "whoever",
-        "all",
-        "me",
-        "myself",
-        "ourselves",
-        "you",
-        "us",
-        "them",
-        "her",
-        "him",
-        "this",
-        "that",
-        "those",
-        "these",
-    }
+    disallowed_names: frozenset = frozenset(
+        {
+            "everyone",
+            "everybody",
+            "nobody",
+            "noone",
+            "no one",
+            "someone",
+            "something",
+            "anyone",
+            "anybody",
+            "anything",
+            "whoever",
+            "all",
+            "me",
+            "myself",
+            "ourselves",
+            "you",
+            "us",
+            "them",
+            "her",
+            "him",
+            "this",
+            "that",
+            "those",
+            "these",
+        }
+    )
     valid_name_pattern: re.Pattern = re.compile(r"[\w '-]+")
     point_pattern: re.Pattern = re.compile(
         r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
