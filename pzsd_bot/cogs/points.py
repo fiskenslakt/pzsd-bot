@@ -495,6 +495,10 @@ class Points(Cog):
             name,
         )
 
+        if user == name:
+            logger.info("Attempting to rename '%s' to the same name, doing nothing.", user)
+            return
+
         async with Session.begin() as session:
             result = await session.execute(
                 select(pzsd_user).where(pzsd_user.c.name == user)
