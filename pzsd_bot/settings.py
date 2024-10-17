@@ -1,7 +1,10 @@
 import re
 from enum import Enum
+from pathlib import Path
 
 from pydantic_settings import BaseSettings
+
+STATIC_DIR = Path(__file__).parent / Path("static")
 
 
 class EnvSettings(BaseSettings, env_file=".env", extra="ignore"):
@@ -86,6 +89,13 @@ class _PointsSettings(EnvSettings):
 
 
 PointsSettings = _PointsSettings()
+
+
+class _DiceSettings(EnvSettings):
+    d20_images: Path = STATIC_DIR / Path("images/dice/D20")
+
+
+DiceSettings = _DiceSettings()
 
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE
