@@ -27,7 +27,7 @@ class Dice(Cog):
         self.bot = bot
 
     @roll.command(description="Roll an n sided die.")
-    @option("sides", description="How many sides the die should have (default is 6).")
+    @option("sides", description="How many sides the die should have.")
     async def dn(self, ctx: ApplicationContext, sides: int) -> None:
         logger.info("%s invoked /roll dn with sides=%s", ctx.author.name, sides)
 
