@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
-STATIC_DIR = Path(__file__).parent / Path("static")
+STATIC_DIR = Path(__file__).parent / "static"
 
 
 class EnvSettings(BaseSettings, env_file=".env", extra="ignore"):
@@ -92,7 +92,7 @@ PointsSettings = _PointsSettings()
 
 
 class _DiceSettings(EnvSettings):
-    d20_images: Path = STATIC_DIR / Path("images/dice/D20")
+    d20_images: Path = STATIC_DIR / "images/dice/D20"
 
 
 DiceSettings = _DiceSettings()

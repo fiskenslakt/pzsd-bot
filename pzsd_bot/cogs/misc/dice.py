@@ -1,5 +1,4 @@
 import logging
-from pathlib import Path
 from random import randint
 
 import discord
@@ -36,7 +35,7 @@ class Dice(Cog):
         logger.info("%s invoked /roll d20", ctx.author.name)
 
         result = randint(1, 20)
-        die_face = discord.File(DiceSettings.d20_images / Path(f"{result}.png"))
+        die_face = discord.File(DiceSettings.d20_images / f"{result}.png")
 
         await ctx.send_response(file=die_face)
 
