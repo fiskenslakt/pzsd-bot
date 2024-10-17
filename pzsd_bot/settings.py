@@ -97,5 +97,31 @@ class _DiceSettings(EnvSettings):
 
 DiceSettings = _DiceSettings()
 
+
+class _Emoji(EnvSettings):
+    dice_0: str = "<:dice_0:1296590662887542907>"
+    dice_1: str = "<:dice_1:1296590681229230252>"
+    dice_2: str = "<:dice_2:1296590696274198558>"
+    dice_3: str = "<:dice_3:1296590711894048789>"
+    dice_4: str = "<:dice_4:1296590731313676359>"
+    dice_5: str = "<:dice_5:1296590746433884292>"
+    dice_6: str = "<:dice_6:1296590761575321600>"
+    dice_7: str = "<:dice_7:1296590781980737636>"
+    dice_8: str = "<:dice_8:1296590805737279568>"
+    dice_9: str = "<:dice_9:1296590835877412915>"
+    dice_minus1: str = "<:dice_minus1:1296590875354202132>"
+    dice_question: str = "<:dice_question:1296590911647780866>"
+
+    lol: str = "<:pLol:1076609913654100010>"
+    nice: str = "<:nice:1225483836717142026>"
+
+    onehundred: str = "<:100:>"
+
+    check_mark: str = "\u2705"
+    cross_mark: str = "\u274c"
+
+
+Emoji = _Emoji()
+
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE
