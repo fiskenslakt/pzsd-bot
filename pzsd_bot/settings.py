@@ -115,7 +115,7 @@ class _Emoji(EnvSettings):
     lol: str = "<:pLol:1076609913654100010>"
     nice: str = "<:nice:1225483836717142026>"
 
-    onehundred: str = "<:100:>"
+    onehundred: str = ":100:"
 
     check_mark: str = "\u2705"
     cross_mark: str = "\u274c"
