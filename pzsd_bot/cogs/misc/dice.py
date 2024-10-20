@@ -19,6 +19,29 @@ D6_FACES = {
     6: Emoji.dice_6,
 }
 
+D20_FACES = {
+    1: Emoji.d20_1,
+    2: Emoji.d20_2,
+    3: Emoji.d20_3,
+    4: Emoji.d20_4,
+    5: Emoji.d20_5,
+    6: Emoji.d20_6,
+    7: Emoji.d20_7,
+    8: Emoji.d20_8,
+    9: Emoji.d20_9,
+    10: Emoji.d20_10,
+    11: Emoji.d20_11,
+    12: Emoji.d20_12,
+    13: Emoji.d20_13,
+    14: Emoji.d20_14,
+    15: Emoji.d20_15,
+    16: Emoji.d20_16,
+    17: Emoji.d20_17,
+    18: Emoji.d20_18,
+    19: Emoji.d20_19,
+    20: Emoji.d20_20,
+}
+
 
 class Dice(Cog):
     roll = SlashCommandGroup("roll", "Roll a die.")
@@ -54,13 +77,24 @@ class Dice(Cog):
         await ctx.respond("".join(results))
 
     @roll.command(description="Roll a 20 sided die.")
-    async def d20(self, ctx: ApplicationContext) -> None:
-        logger.info("%s invoked /roll d20", ctx.author.name)
+    @option(
+        "rolls",
+        description="How many dice to roll at once (default is 1).",
+        min_value=1,
+        max_value=10,
+        required=False,
+    )
+    async def d20(self, ctx: ApplicationContext, rolls: int = 1) -> None:
+        logger.info("%s invoked /roll d20 with rolls=%s", ctx.author.name, rolls)
 
-        result = randint(1, 20)
-        die_face = discord.File(DiceSettings.d20_images / f"{result}.png")
+        if rolls == 1:
+            result = randint(1, 20)
+            die_face = discord.File(DiceSettings.d20_images / f"d20_{result}.png")
 
-        await ctx.send_response(file=die_face)
+            await ctx.send_response(file=die_face)
+        else:
+            results = [D20_FACES[randint(1, 20)] for _ in range(rolls)]
+            await ctx.respond("".join(results))
 
 
 def setup(bot: Bot) -> None:
