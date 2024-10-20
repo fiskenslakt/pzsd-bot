@@ -496,7 +496,9 @@ class Points(Cog):
         )
 
         if user == name:
-            logger.info("Attempting to rename '%s' to the same name, doing nothing.", user)
+            logger.info(
+                "Attempting to rename '%s' to the same name, doing nothing.", user
+            )
             return
 
         async with Session.begin() as session:
