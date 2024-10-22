@@ -141,6 +141,12 @@ class _Emoji(EnvSettings):
     check_mark: str = "\u2705"
     cross_mark: str = "\u274c"
 
+    def get_d6(self, face: int) -> str:
+        return getattr(self, f"dice_{face}")
+
+    def get_d20(self, face: int) -> str:
+        return getattr(self, f"d20_{face}")
+
 
 Emoji = _Emoji()
 

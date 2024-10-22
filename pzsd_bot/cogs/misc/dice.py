@@ -10,38 +10,6 @@ from pzsd_bot.settings import DiceSettings, Emoji
 
 logger = logging.getLogger(__name__)
 
-D6_FACES = {
-    1: Emoji.dice_1,
-    2: Emoji.dice_2,
-    3: Emoji.dice_3,
-    4: Emoji.dice_4,
-    5: Emoji.dice_5,
-    6: Emoji.dice_6,
-}
-
-D20_FACES = {
-    1: Emoji.d20_1,
-    2: Emoji.d20_2,
-    3: Emoji.d20_3,
-    4: Emoji.d20_4,
-    5: Emoji.d20_5,
-    6: Emoji.d20_6,
-    7: Emoji.d20_7,
-    8: Emoji.d20_8,
-    9: Emoji.d20_9,
-    10: Emoji.d20_10,
-    11: Emoji.d20_11,
-    12: Emoji.d20_12,
-    13: Emoji.d20_13,
-    14: Emoji.d20_14,
-    15: Emoji.d20_15,
-    16: Emoji.d20_16,
-    17: Emoji.d20_17,
-    18: Emoji.d20_18,
-    19: Emoji.d20_19,
-    20: Emoji.d20_20,
-}
-
 
 class Dice(Cog):
     roll = SlashCommandGroup("roll", "Roll a die.")
@@ -73,7 +41,7 @@ class Dice(Cog):
     async def d6(self, ctx: ApplicationContext, rolls: int = 1) -> None:
         logger.info("%s invoked /roll d6 with rolls=%s", ctx.author.name, rolls)
 
-        results = [D6_FACES[randint(1, 6)] for _ in range(rolls)]
+        results = [Emoji.get_d6(randint(1, 6)) for _ in range(rolls)]
         await ctx.respond("".join(results))
 
     @roll.command(description="Roll a 20 sided die.")
@@ -93,7 +61,7 @@ class Dice(Cog):
 
             await ctx.send_response(file=die_face)
         else:
-            results = [D20_FACES[randint(1, 20)] for _ in range(rolls)]
+            results = [Emoji.get_d20(randint(1, 20)) for _ in range(rolls)]
             await ctx.respond("".join(results))
 
 
