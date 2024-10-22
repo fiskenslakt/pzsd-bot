@@ -21,7 +21,7 @@ async def on_ready():
 async def run_bot():
     try:
         async with bot:
-            bot.load_extensions("pzsd_bot.cogs")
+            bot.load_extensions("pzsd_bot.cogs", recursive=True)
             await bot.start(Bot.token)
     finally:
         await engine.dispose()
