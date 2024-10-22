@@ -58,7 +58,6 @@ class Dice(Cog):
         if rolls == 1:
             result = randint(1, 20)
             die_face = discord.File(DiceSettings.d20_images / f"d20_{result}.png")
-
             await ctx.send_response(file=die_face)
         else:
             results = [Emoji.get_d20(randint(1, 20)) for _ in range(rolls)]
