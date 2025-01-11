@@ -141,7 +141,7 @@ class Points(Cog):
 
         bestower, bestower_is_valid = await self.get_bestower_info(message)
 
-        pretty_point_amount = format(point_amount, ",") if point_amount else ""
+        pretty_point_amount = format(point_amount, ",")
 
         is_to_everyone = False
         if recipient_name is None:
