@@ -7,6 +7,7 @@ from discord import Bot, Message
 from discord.ext.commands import Cog
 from sqlalchemy import insert, select, text
 from sqlalchemy.engine import Row
+from sqlalchemy.sql.elements import BinaryExpression
 
 from pzsd_bot.db import Session
 from pzsd_bot.model import ledger, pzsd_user
@@ -126,6 +127,38 @@ class Points(Cog):
 
         return bestower, bestower_is_valid
 
+    @staticmethod
+    async def get_recipient(
+        message: Message,
+        bestower: Row | None,
+        recipient_name: str | None,
+        recipient_id: str | None,
+        is_to_everyone: bool,
+        condition: BinaryExpression,
+    ) -> tuple[Row | None, bool]:
+        recipient_is_valid = True
+        if not is_to_everyone:
+            async with Session.begin() as session:
+                result = await session.execute(select(pzsd_user).where(condition))
+                recipient = result.one_or_none()
+
+            if recipient is None:
+                logger.info(
+                    "%s tried to bestow points to '%s' but they weren't in the user table",
+                    bestower.name if bestower else message.author.name,
+                    recipient_name or recipient_id,
+                )
+                recipient_is_valid = False
+            elif not recipient.is_active:
+                logger.info(
+                    "%s tried to bestow points to '%s' but they were inactive",
+                    bestower.name if bestower else message.author.name,
+                    recipient.name,
+                )
+                recipient_is_valid = False
+
+        return recipient, recipient_is_valid
+
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
         if message.author == self.bot.user:
@@ -151,26 +184,9 @@ class Points(Cog):
         else:
             condition = pzsd_user.c.name == recipient_name.lower()
 
-        recipient_is_valid = True
-        if not is_to_everyone:
-            async with Session.begin() as session:
-                result = await session.execute(select(pzsd_user).where(condition))
-                recipient = result.one_or_none()
-
-            if recipient is None:
-                logger.info(
-                    "%s tried to bestow points to '%s' but they weren't in the user table",
-                    bestower.name if bestower else message.author.name,
-                    recipient_name or recipient_id,
-                )
-                recipient_is_valid = False
-            elif not recipient.is_active:
-                logger.info(
-                    "%s tried to bestow points to '%s' but they were inactive",
-                    bestower.name if bestower else message.author.name,
-                    recipient.name,
-                )
-                recipient_is_valid = False
+        recipient, recipient_is_valid = await self.get_recipient(
+            message, bestower, recipient_name, recipient_id, is_to_everyone, condition
+        )
 
         excessive_point_violation = (
             not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
