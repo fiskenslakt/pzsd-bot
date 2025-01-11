@@ -36,16 +36,7 @@ class Points(Cog):
         bestower: Row, recipient: Row, point_amount: int, is_to_everyone: bool
     ) -> None:
         async with Session.begin() as session:
-            if not is_to_everyone:
-                await session.execute(
-                    insert(ledger).values(
-                        bestower=bestower.id,
-                        recipient=recipient.id,
-                        points=point_amount,
-                    )
-                )
-                logger.info("Added point transaction to ledger")
-            else:
+            if is_to_everyone:
                 users = select(
                     text(f"'{bestower.id}'"),
                     pzsd_user.c.id,
@@ -62,6 +53,15 @@ class Points(Cog):
                     )
                 )
                 logger.info("Added %s point transactions to ledger", result.rowcount)
+            else:
+                await session.execute(
+                    insert(ledger).values(
+                        bestower=bestower.id,
+                        recipient=recipient.id,
+                        points=point_amount,
+                    )
+                )
+                logger.info("Added point transaction to ledger")
 
     async def get_transaction_info(
         self, message: Message
@@ -182,13 +182,13 @@ class Points(Cog):
         else:
             condition = pzsd_user.c.name == recipient_name.lower()
 
-        if not is_to_everyone:
+        if is_to_everyone:
+            recipient = None
+            recipient_is_valid = True
+        else:
             recipient, recipient_is_valid = await self.get_recipient(
                 message, bestower, recipient_name, recipient_id, condition
             )
-        else:
-            recipient = None
-            recipient_is_valid = True
 
         excessive_point_violation = (
             not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
