@@ -168,7 +168,7 @@ class Points(Cog):
                 logger.info(
                     "%s tried to bestow points to '%s' but they were inactive",
                     bestower.name if bestower else message.author.name,
-                    recipient_name or recipient_id,
+                    recipient.name,
                 )
                 recipient_is_valid = False
 
