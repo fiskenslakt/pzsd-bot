@@ -15,8 +15,8 @@ from pzsd_bot.settings import (
     POINT_MIN_VALUE,
     Channels,
     Colors,
-    PointsSettings,
     Emoji,
+    PointsSettings,
 )
 
 EVERYONE_KEYWORD = "everyone"
