@@ -198,7 +198,7 @@ class Points(Cog):
             elif excessive_point_violation:
                 logger.info(
                     "%s tried to give %s more than the max allowed points (%s)",
-                    bestower.name if bestower else message.author.name,
+                    bestower.name,
                     recipient.name if not is_to_everyone else EVERYONE_KEYWORD,
                     pretty_point_amount,
                 )
