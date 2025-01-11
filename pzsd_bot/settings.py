@@ -149,6 +149,7 @@ class _Emoji(EnvSettings):
 
     lol: str = "<:pLol:1076609913654100010>"
     nice: str = "<:nice:1225483836717142026>"
+    nopers: str = "<a:Nopers:1327460666176442438>"
 
     onehundred: str = ":100:"
 
