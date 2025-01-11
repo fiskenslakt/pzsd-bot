@@ -183,9 +183,7 @@ class Points(Cog):
         else:
             self_point_violation = False
 
-        transaction_is_valid = (
-            bestower_is_valid and recipient_is_valid and point_amount is not None
-        )
+        transaction_is_valid = bestower_is_valid and recipient_is_valid
 
         if transaction_is_valid:
             if self_point_violation:
