@@ -90,7 +90,7 @@ class Points(Cog):
         return recipient_id, recipient_name, point_amount
 
     @staticmethod
-    async def get_bestower_info(message: Message) -> tuple[Row | None, bool]:
+    async def get_bestower(message: Message) -> tuple[Row | None, bool]:
         bestower_is_valid = True
 
         async with Session.begin() as session:
@@ -139,7 +139,7 @@ class Points(Cog):
         if point_amount is None:
             return
 
-        bestower, bestower_is_valid = await self.get_bestower_info(message)
+        bestower, bestower_is_valid = await self.get_bestower(message)
 
         pretty_point_amount = format(point_amount, ",")
 
