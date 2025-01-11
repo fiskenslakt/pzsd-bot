@@ -175,7 +175,7 @@ class Points(Cog):
             not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
         )
 
-        if bestower is not None:
+        if bestower is not None and recipient is not None:
             self_point_violation = (
                 is_to_everyone is False and bestower.id == recipient.id
             )
