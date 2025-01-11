@@ -16,6 +16,7 @@ from pzsd_bot.settings import (
     Channels,
     Colors,
     PointsSettings,
+    Emoji,
 )
 
 EVERYONE_KEYWORD = "everyone"
@@ -195,6 +196,7 @@ class Points(Cog):
                 )
                 title = "Self point violation!"
                 color = Colors.red.value
+                reaction = Emoji.nopers
             elif excessive_point_violation:
                 logger.info(
                     "%s tried to give %s more than the max allowed points (%s)",
@@ -204,6 +206,7 @@ class Points(Cog):
                 )
                 title = "Excessive point violation!"
                 color = Colors.red.value
+                reaction = Emoji.nopers
             else:
                 logger.info(
                     "%s awarding %s point(s) to %s",
@@ -216,6 +219,7 @@ class Points(Cog):
                 )
                 title = "Point transaction"
                 color = Colors.white.value
+                reaction = Emoji.check_mark
 
             embed = discord.Embed(
                 title=title,
@@ -240,7 +244,9 @@ class Points(Cog):
             points_log_channel = self.bot.get_channel(Channels.points_log)
             await points_log_channel.send(embed=embed)
         else:
-            pass
+            reaction = Emoji.cross_mark
+
+        await message.add_reaction(reaction)
 
 
 def setup(bot: Bot) -> None:
