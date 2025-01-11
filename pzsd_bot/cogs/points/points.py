@@ -133,29 +133,27 @@ class Points(Cog):
         bestower: Row | None,
         recipient_name: str | None,
         recipient_id: str | None,
-        is_to_everyone: bool,
         condition: BinaryExpression,
     ) -> tuple[Row | None, bool]:
         recipient_is_valid = True
-        if not is_to_everyone:
-            async with Session.begin() as session:
-                result = await session.execute(select(pzsd_user).where(condition))
-                recipient = result.one_or_none()
+        async with Session.begin() as session:
+            result = await session.execute(select(pzsd_user).where(condition))
+            recipient = result.one_or_none()
 
-            if recipient is None:
-                logger.info(
-                    "%s tried to bestow points to '%s' but they weren't in the user table",
-                    bestower.name if bestower else message.author.name,
-                    recipient_name or recipient_id,
-                )
-                recipient_is_valid = False
-            elif not recipient.is_active:
-                logger.info(
-                    "%s tried to bestow points to '%s' but they were inactive",
-                    bestower.name if bestower else message.author.name,
-                    recipient.name,
-                )
-                recipient_is_valid = False
+        if recipient is None:
+            logger.info(
+                "%s tried to bestow points to '%s' but they weren't in the user table",
+                bestower.name if bestower else message.author.name,
+                recipient_name or recipient_id,
+            )
+            recipient_is_valid = False
+        elif not recipient.is_active:
+            logger.info(
+                "%s tried to bestow points to '%s' but they were inactive",
+                bestower.name if bestower else message.author.name,
+                recipient.name,
+            )
+            recipient_is_valid = False
 
         return recipient, recipient_is_valid
 
@@ -184,9 +182,13 @@ class Points(Cog):
         else:
             condition = pzsd_user.c.name == recipient_name.lower()
 
-        recipient, recipient_is_valid = await self.get_recipient(
-            message, bestower, recipient_name, recipient_id, is_to_everyone, condition
-        )
+        if not is_to_everyone:
+            recipient, recipient_is_valid = await self.get_recipient(
+                message, bestower, recipient_name, recipient_id, condition
+            )
+        else:
+            recipient = None
+            recipient_is_valid = True
 
         excessive_point_violation = (
             not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
