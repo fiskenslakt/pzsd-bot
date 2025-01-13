@@ -23,7 +23,6 @@ createdb -O postgres pzsd
 
 Run migrations:
 ```
-# with virtual environment active
 alembic upgrade head
 ```
 
@@ -38,8 +37,12 @@ POINTS_LOG_CHANNEL=channelidhere
 
 ### Run the bot
 ```
-# with virtual environment active
 python -m pzsd_bot
+```
+
+### Run tests
+```
+pytest -v
 ```
 
 ## Create migrations
