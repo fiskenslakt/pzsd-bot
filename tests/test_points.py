@@ -147,7 +147,7 @@ async def test_unsuccessful_point_transaction_inactive_bestower__standard_syntax
 
 
 @pytest.mark.asyncio
-async def test_successful_point_transaction_to_everyone__standard_syntax(
+async def test_successful_point_transaction_to_everyone(
     mock_bot: MagicMock,
     mock_db_session: AsyncMock,
     mock_bestower: AsyncMock,
