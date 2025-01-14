@@ -41,11 +41,18 @@ class _DB(EnvSettings):
     pghost: str = "localhost"
     pgport: int = 5432
     pgdatabase: str = "pzsd"
+    testing: bool = False
+
+    @property
+    def connection_str(self) -> str:
+        if self.testing:
+            return "sqlite+aiosqlite:///:memory:"  # Use SQLite for testing
+        return f"postgresql+asyncpg://{self.pguser}:{self.pgpassword}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
 
 
 DB = _DB()
 
-DB_CONNECTION_STR = f"postgresql+asyncpg://{DB.pguser}:{DB.pgpassword}@{DB.pghost}:{DB.pgport}/{DB.pgdatabase}"
+DB_CONNECTION_STR = DB.connection_str
 
 
 class _PointsSettings(EnvSettings):
