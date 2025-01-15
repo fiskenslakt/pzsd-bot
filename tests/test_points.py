@@ -34,7 +34,9 @@ async def test_successful_point_transaction__standard_syntax(
     mock_message.author = MagicMock(id=1)  # bestower discord_snowflake
     mock_message.content = f"{mock_point_amount} points to {mock_recipient_name}"
 
-    recipient_id, recipient_name, _ = await points_cog.get_transaction_info(mock_message)
+    recipient_id, recipient_name, _ = await points_cog.get_transaction_info(
+        mock_message
+    )
     if mock_recipient_id == "3":
         assert recipient_name is None
         assert recipient_id == "3"
