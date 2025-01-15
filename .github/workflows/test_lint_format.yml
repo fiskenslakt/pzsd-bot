@@ -25,7 +25,7 @@ jobs:
       - name: Install uv and dependencies
         run: |
           pip install uv
-          uv pip install -r requirements.txt
+          uv pip install --system -r requirements.txt
 
       - name: Run ruff check
         run: ruff check
