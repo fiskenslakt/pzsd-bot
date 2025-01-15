@@ -9,6 +9,10 @@ jobs:
   test-lint-format:
     runs-on: ubuntu-latest
 
+    # dummy token for required bot env variable
+    env:
+      TOKEN: foo
+
     steps:
       # Checkout the repository
       - name: Checkout code
