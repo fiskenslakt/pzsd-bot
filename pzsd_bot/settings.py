@@ -20,7 +20,7 @@ class _Bot(EnvSettings):
 Bot = _Bot()
 
 
-class _Miscellaneous(EnvConfig):
+class _Miscellaneous(EnvSettings):
     debug: bool = False
 
 
