@@ -18,6 +18,7 @@ from pzsd_bot.settings import POINT_MAX_VALUE, POINT_MIN_VALUE, Emoji
         ("4", "Abba-Zaba", "1,000"),
         ("5", "McDonald's", "-42"),
         ("6", '"name with spaces"', "0"),
+        ("3", "<@3>", "1337"),  # discord mention
     ],
 )
 async def test_successful_point_transaction__standard_syntax(
@@ -33,8 +34,13 @@ async def test_successful_point_transaction__standard_syntax(
     mock_message.author = MagicMock(id=1)  # bestower discord_snowflake
     mock_message.content = f"{mock_point_amount} points to {mock_recipient_name}"
 
-    _, recipient_name, _ = await points_cog.get_transaction_info(mock_message)
-    assert recipient_name == mock_recipient_name.strip('"')
+    recipient_id, recipient_name, _ = await points_cog.get_transaction_info(mock_message)
+    if mock_recipient_id == "3":
+        assert recipient_name is None
+        assert recipient_id == "3"
+    else:
+        assert recipient_id is None
+        assert recipient_name == mock_recipient_name.strip('"')
 
     await points_cog.on_message(mock_message)
 
