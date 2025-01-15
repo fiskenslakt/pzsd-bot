@@ -29,10 +29,10 @@ jobs:
           pip install uv
           uv pip install --system -r requirements.txt
 
-      - name: Run ruff check
+      - name: Lint
         run: ruff check
-      - name: Check code formatting
+      - name: Format
         run: ruff format --check
 
-      - name: Run tests with pytest
+      - name: Test
         run: pytest -v --disable-warnings
