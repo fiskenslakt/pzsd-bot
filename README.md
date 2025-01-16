@@ -38,9 +38,25 @@ POINTS_LOG_CHANNEL=channelidhere
 uv run python -m pzsd_bot
 ```
 
+## Tests and Formatting
+
 ### Run tests
 ```
 uv run pytest -v --disable-warnings
+```
+
+### Run linter and formatter
+```
+uv run ruff check
+uv run ruff format --check
+
+# To see potential changes
+uv run ruff check --diff
+uv run ruff format --diff
+
+# To make changes
+uv run ruff check --fix
+uv run ruff format
 ```
 
 ## Create migrations
