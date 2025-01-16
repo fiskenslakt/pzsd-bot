@@ -6,12 +6,10 @@ Discord bot for PZSD server
 Install [uv](https://github.com/astral-sh/uv) and then run the following:
 
 ```
-# create virtual environment and activate it
-uv venv
-source .venv/bin/activate
-
-# install dependencies
-uv pip sync requirements.txt
+# Create virtual environment and install dependencies
+uv sync
+# Optionally omit dev dependencies
+uv sync --no-dev
 ```
 
 ### Database
@@ -23,7 +21,7 @@ createdb -O postgres pzsd
 
 Run migrations:
 ```
-alembic upgrade head
+uv run alembic upgrade head
 ```
 
 ### Environment
@@ -37,17 +35,17 @@ POINTS_LOG_CHANNEL=channelidhere
 
 ### Run the bot
 ```
-python -m pzsd_bot
+uv run python -m pzsd_bot
 ```
 
 ### Run tests
 ```
-pytest -v
+uv run pytest -v --disable-warnings
 ```
 
 ## Create migrations
 
 If you've made a change to pzsd_bot/model.py, you can generate a new migration file:
 ```
-alembic revision --autogenerate -m "description of your migration"
+uv run alembic revision --autogenerate -m "description of your migration"
 ```
