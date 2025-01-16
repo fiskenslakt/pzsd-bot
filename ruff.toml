@@ -2,9 +2,8 @@ exclude = ["alembic"]
 
 [lint]
 # ignore equality comparisons to `True` and `None`
-# ignore type annotations for `self` and `cls`
 # ignore return type annotations
-ignore = ["E711", "E712", "ANN101", "ANN102", "ANN201", "ANN204"]
+ignore = ["E711", "E712", "ANN201", "ANN204"]
 # sort imports
 # enforce type annotations
 # enforce non-blocking calls in async functions
