@@ -41,13 +41,16 @@ class _DB(EnvSettings):
     pghost: str = "localhost"
     pgport: int = 5432
     pgdatabase: str = "pzsd"
-    testing: bool = False
+    db_engine: str = "postgres"
 
     @property
     def connection_str(self) -> str:
-        if self.testing:
-            return "sqlite+aiosqlite:///:memory:"  # Use SQLite for testing
-        return f"postgresql+asyncpg://{self.pguser}:{self.pgpassword}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
+        if self.db_engine == "sqlite":
+            return "sqlite+aiosqlite:///:memory:"
+        elif self.db_engine == "postgres":
+            return f"postgresql+asyncpg://{self.pguser}:{self.pgpassword}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
+        else:
+            raise ValueError(f"Invalid db_engine: '{self.db_engine}'")
 
 
 DB = _DB()
