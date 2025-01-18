@@ -27,12 +27,12 @@ jobs:
       - name: Install uv and dependencies
         run: |
           pip install uv
-          uv pip install --system -r pyproject.toml
+          uv sync --frozen
 
       - name: Lint
-        run: ruff check
+        run: uv run ruff check
       - name: Format
-        run: ruff format --check
+        run: uv run ruff format --check
 
       - name: Test
-        run: pytest -v --disable-warnings
+        run: uv run pytest -v --disable-warnings
