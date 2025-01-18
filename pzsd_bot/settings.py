@@ -41,11 +41,21 @@ class _DB(EnvSettings):
     pghost: str = "localhost"
     pgport: int = 5432
     pgdatabase: str = "pzsd"
+    db_engine: str = "postgres"
+
+    @property
+    def connection_str(self) -> str:
+        if self.db_engine == "sqlite":
+            return "sqlite+aiosqlite:///:memory:"
+        elif self.db_engine == "postgres":
+            return f"postgresql+asyncpg://{self.pguser}:{self.pgpassword}@{self.pghost}:{self.pgport}/{self.pgdatabase}"
+        else:
+            raise ValueError(f"Invalid db_engine: '{self.db_engine}'")
 
 
 DB = _DB()
 
-DB_CONNECTION_STR = f"postgresql+asyncpg://{DB.pguser}:{DB.pgpassword}@{DB.pghost}:{DB.pgport}/{DB.pgdatabase}"
+DB_CONNECTION_STR = DB.connection_str
 
 
 class _PointsSettings(EnvSettings):
