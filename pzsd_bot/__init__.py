@@ -2,10 +2,10 @@ import logging
 from logging import handlers
 from pathlib import Path
 
-from pzsd_bot.settings import Bot
+from pzsd_bot import settings
 
 logger = logging.getLogger()
-logger.setLevel(Bot.log_level)
+logger.setLevel(logging.DEBUG if settings.DEBUG_MODE else logging.INFO)
 log_file = Path(__file__).parents[1] / Path("logs", "pzsd_bot.log")
 log_file.parent.mkdir(exist_ok=True)
 handler = handlers.RotatingFileHandler(
