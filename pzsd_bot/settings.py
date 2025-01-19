@@ -162,10 +162,10 @@ class _Emoji(EnvSettings):
     lol: str = "<:pLol:1076609913654100010>"
     nice: str = "<:nice:1225483836717142026>"
     nopers: str = "<a:Nopers:1327460666176442438>"
+    check_mark: str = "<:check:1327808537962741892>"
 
     onehundred: str = ":100:"
 
-    check_mark: str = "\u2705"
     cross_mark: str = "\u274c"
 
     def get_d6(self, face: int) -> str:
