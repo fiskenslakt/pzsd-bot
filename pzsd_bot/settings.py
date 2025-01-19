@@ -15,18 +15,12 @@ class EnvSettings(BaseSettings, env_file=".env", extra="ignore"):
 
 class _Bot(EnvSettings):
     token: str
+    debug: bool = False
 
 
 Bot = _Bot()
 
-
-class _Miscellaneous(EnvSettings):
-    debug: bool = False
-
-
-Miscellaneous = _Miscellaneous()
-
-DEBUG_MODE = Miscellaneous.debug
+DEBUG_MODE = Bot.debug
 
 
 class _Channels(EnvSettings):
