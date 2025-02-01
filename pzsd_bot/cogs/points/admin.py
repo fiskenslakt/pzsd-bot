@@ -168,7 +168,7 @@ class PointUserAdmin(Cog):
 
         paginator = Paginator(
             pages=pages,
-            disable_on_timeout=False,
+            timeout=None,
             author_check=True,
             use_default_buttons=False,
             custom_buttons=PointsSettings.page_buttons,
