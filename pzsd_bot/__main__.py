@@ -6,6 +6,7 @@ from discord import Intents
 
 from pzsd_bot.db import engine
 from pzsd_bot.settings import Bot
+from pzsd_bot.scheduler import scheduler
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,8 @@ bot = discord.Bot(intents=Intents.all())
 async def on_ready():
     print("Ready.")
     logger.info("Logged in as %s", bot.user)
+    if not scheduler.running:
+        scheduler.start()
 
 
 async def run_bot():
