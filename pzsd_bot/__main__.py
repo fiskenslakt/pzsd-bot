@@ -5,8 +5,8 @@ import discord
 from discord import Intents
 
 from pzsd_bot.db import engine
-from pzsd_bot.settings import Bot
 from pzsd_bot.scheduler import scheduler
+from pzsd_bot.settings import Bot
 
 logger = logging.getLogger(__name__)
 
