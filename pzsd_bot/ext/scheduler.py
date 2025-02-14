@@ -2,6 +2,7 @@ import asyncio
 import logging
 from collections import abc
 from datetime import datetime
+from functools import partial
 
 
 class Scheduler:
@@ -22,10 +23,19 @@ class Scheduler:
         await coroutine
         self._logger.info("Finished task with id=%s", task_id)
 
+    def _task_done_callback(self, task_id: str, done_task: asyncio.Task) -> None:
+        self._logger.info("Performing done callback for task with id=%s", task_id)
+
+        scheduled_task = self.tasks.get(task_id)
+        if scheduled_task is done_task:
+            self._logger.info("Deleting task with id=%s", task_id)
+            del self.tasks[task_id]
+
     def create_task(self, task_id: str, coroutine: abc.Coroutine) -> None:
         task = asyncio.create_task(coroutine, name=f"{self.name}_{task_id}")
-        self.tasks[task_id] = task
+        task.add_done_callback(partial(self._task_done_callback, task_id))
 
+        self.tasks[task_id] = task
         self._logger.info("Scheduled task with id=%s", task_id)
 
     def schedule(
