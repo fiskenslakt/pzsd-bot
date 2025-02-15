@@ -258,7 +258,12 @@ class Points(Cog):
             )
 
             points_log_channel = self.bot.get_channel(Channels.points_log)
-            await points_log_channel.send(embed=embed)
+            if points_log_channel is None:
+                logger.error(
+                    "points-log channel is missing, unable to post transaction log."
+                )
+            else:
+                await points_log_channel.send(embed=embed)
         else:
             reaction = Emoji.cross_mark
 
