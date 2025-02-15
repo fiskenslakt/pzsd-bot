@@ -15,7 +15,7 @@ class Paginator(PycordPaginator):
         respond to, which isn't available in cases where the paginator is sent
         automatically.
         """
-        if channel is not None and not isinstance(channel, discord.abc.Messageable):
+        if not isinstance(channel, discord.abc.Messageable):
             raise TypeError(f"expected abc.Messageable not {channel.__class__!r}")
 
         self.update_buttons()
