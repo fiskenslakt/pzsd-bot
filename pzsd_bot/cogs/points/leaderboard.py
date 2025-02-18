@@ -161,7 +161,6 @@ class PointLeaderboard(Cog):
                     "No points have been bestowed in the last 7 days!"
                 )
 
-
     @leaderboard.command(
         description="Display total points awarded from the beginning of time."
     )
