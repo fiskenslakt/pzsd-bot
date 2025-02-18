@@ -24,7 +24,7 @@ class Scheduler:
         self._logger.info("Finished task with id=%s", task_id)
 
     def _task_done_callback(self, task_id: str, done_task: asyncio.Task) -> None:
-        self._logger.info("Performing done callback for task with id=%s", task_id)
+        self._logger.debug("Performing done callback for task with id=%s", task_id)
 
         scheduled_task = self.tasks.get(task_id)
         if scheduled_task is done_task:
