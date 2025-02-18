@@ -31,7 +31,7 @@ class Scheduler:
             self._logger.info("Deleting task with id=%s", task_id)
             del self.tasks[task_id]
 
-    def create_task(self, task_id: str, coroutine: abc.Coroutine) -> None:
+    def _create_task(self, task_id: str, coroutine: abc.Coroutine) -> None:
         task = asyncio.create_task(coroutine, name=f"{self.name}_{task_id}")
         task.add_done_callback(partial(self._task_done_callback, task_id))
 
@@ -46,7 +46,7 @@ class Scheduler:
         if delay > 0:
             coroutine = self._run_later(delay, task_id, coroutine)
 
-        self.create_task(task_id, coroutine)
+        self._create_task(task_id, coroutine)
 
     def cancel(self, task_id: str) -> None:
         self._logger.info("Canceling task with id=%s", task_id)
