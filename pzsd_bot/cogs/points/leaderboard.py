@@ -35,9 +35,9 @@ class PointLeaderboard(Cog):
         # Schedule the initial weekly lb post
         # which can in turn schedule the next one
         self.scheduler.schedule(
-            self.next_weekly_lb_post,
-            f"weekly_leaderboard_post_{uuid.uuid4()}",
-            self.weekly(None),
+            run_at=self.next_weekly_lb_dt,
+            task_id=f"weekly_leaderboard_post_{uuid.uuid4()}",
+            coroutine=self.weekly(None),
         )
 
     @property
@@ -114,6 +114,13 @@ class PointLeaderboard(Cog):
         else:
             logger.info("`/leaderboard weekly` invoked automatically by scheduler")
 
+            # reschedule task for next friday at 4pm ET
+            self.scheduler.schedule(
+                run_at=self.next_weekly_lb_dt,
+                task_id=f"weekly_leaderboard_post_{uuid.uuid4()}",
+                coroutine=self.weekly(None),
+            )
+
         last_week = datetime.now() - timedelta(days=7)
         leaderboard = await self.fetch_leaderboard(ledger.c.created_at > last_week)
         description = f"Points awarded after <t:{int(last_week.timestamp())}:f>"
@@ -154,12 +161,6 @@ class PointLeaderboard(Cog):
                     "No points have been bestowed in the last 7 days!"
                 )
 
-            # reschedule task for next friday at 4pm ET
-            self.scheduler.schedule(
-                self.next_weekly_lb_post,
-                f"weekly_leaderboard_post_{uuid.uuid4()}",
-                self.weekly(None),
-            )
 
     @leaderboard.command(
         description="Display total points awarded from the beginning of time."
