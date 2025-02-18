@@ -41,7 +41,7 @@ class PointLeaderboard(Cog):
         )
 
     @property
-    def next_weekly_lb_post(self):
+    def next_weekly_lb_dt(self):
         now = pendulum.now("America/New_York")
         if now.weekday() == pendulum.FRIDAY and now.hour < 16:
             friday_at_4pm = now.at(16)
