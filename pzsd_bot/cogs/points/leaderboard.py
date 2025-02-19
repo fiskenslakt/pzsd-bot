@@ -1,24 +1,24 @@
 import logging
 import re
+import uuid
 from datetime import datetime, timedelta
 from itertools import batched
 from math import ceil
 from typing import Iterable, Optional, Tuple
 
+import pendulum
 from discord import ApplicationContext, Bot, Embed
 from discord.commands import SlashCommandGroup
 from discord.ext.commands import Cog
-from discord.ext.pages import Paginator
 from sqlalchemy import select
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import sum as sql_sum
 
 from pzsd_bot.db import Session
+from pzsd_bot.ext.pagination import Paginator
+from pzsd_bot.ext.scheduler import Scheduler
 from pzsd_bot.model import ledger, pzsd_user
-from pzsd_bot.settings import (
-    Colors,
-    PointsSettings,
-)
+from pzsd_bot.settings import Channels, Colors, PointsSettings
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,28 @@ class PointLeaderboard(Cog):
 
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.scheduler = Scheduler(__class__.__name__)
+
+        # Schedule the initial weekly lb post
+        # which can in turn schedule the next one
+        self.scheduler.schedule(
+            run_at=self.next_weekly_lb_dt,
+            task_id=f"weekly_leaderboard_post_{uuid.uuid4()}",
+            coroutine=self.weekly(None),
+        )
+
+    @property
+    def next_weekly_lb_dt(self):
+        now = pendulum.now("America/New_York")
+        if now.weekday() == pendulum.FRIDAY and now.hour < 16:
+            friday_at_4pm = now.at(16)
+        else:
+            friday_at_4pm = now.next(pendulum.FRIDAY).at(16)
+
+        return friday_at_4pm
+
+    def cog_unload(self) -> None:
+        self.scheduler.cancel_all()
 
     async def fetch_leaderboard(
         self, *args: list[BinaryExpression], paginate: bool = True, page_size: int = 10
@@ -86,8 +108,18 @@ class PointLeaderboard(Cog):
         return embed
 
     @leaderboard.command(description="Display points awarded in the last 7 days.")
-    async def weekly(self, ctx: ApplicationContext) -> None:
-        logger.info("`/leaderboard weekly` invoked by %s", ctx.author.name)
+    async def weekly(self, ctx: ApplicationContext | None) -> None:
+        if ctx is not None:
+            logger.info("`/leaderboard weekly` invoked by %s", ctx.author.name)
+        else:
+            logger.info("`/leaderboard weekly` invoked automatically by scheduler")
+
+            # reschedule task for next friday at 4pm ET
+            self.scheduler.schedule(
+                run_at=self.next_weekly_lb_dt,
+                task_id=f"weekly_leaderboard_post_{uuid.uuid4()}",
+                coroutine=self.weekly(None),
+            )
 
         last_week = datetime.now() - timedelta(days=7)
         leaderboard = await self.fetch_leaderboard(ledger.c.created_at > last_week)
@@ -100,15 +132,34 @@ class PointLeaderboard(Cog):
             )
             pages.append(embed)
 
-        paginator = Paginator(
-            pages=pages,
-            timeout=None,
-            author_check=False,
-            use_default_buttons=False,
-            custom_buttons=PointsSettings.page_buttons,
-        )
+        if pages:
+            paginator = Paginator(
+                pages=pages,
+                timeout=None,
+                author_check=False,
+                use_default_buttons=False,
+                custom_buttons=PointsSettings.page_buttons,
+            )
+        else:
+            paginator = None
 
-        await paginator.respond(ctx.interaction)
+        if ctx is not None:
+            if paginator is not None:
+                await paginator.respond(ctx.interaction)
+            else:
+                ctx.respond("No points have been bestowed in the last 7 days!")
+        else:
+            points_lounge_channel = self.bot.get_channel(Channels.points_lounge)
+            if points_lounge_channel is None:
+                logger.error(
+                    "points-lounge channel is missing, unable to post weekly leaderboard."
+                )
+            elif paginator is not None:
+                await paginator.channel_send(points_lounge_channel)
+            else:
+                await points_lounge_channel.send(
+                    "No points have been bestowed in the last 7 days!"
+                )
 
     @leaderboard.command(
         description="Display total points awarded from the beginning of time."

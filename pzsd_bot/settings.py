@@ -24,8 +24,8 @@ DEBUG_MODE = Bot.debug
 
 
 class _Channels(EnvSettings):
-    # where point transactions get logged
     points_log: int = 1223525487578710016
+    points_lounge: int = 1278058432905351178
 
 
 Channels = _Channels()
