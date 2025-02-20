@@ -53,6 +53,22 @@ class Triggers(Cog):
         )
 
     @Cog.listener()
+    async def on_trigger_added(
+        self, patterns: List[str], responses: List[str], is_regex: bool
+    ) -> None:
+        logger.info("Updating triggers in memory")
+
+        for pattern in patterns:
+            if is_regex:
+                self.regex_triggers[pattern] = responses
+            else:
+                self.normal_triggers[pattern] = responses
+
+    @Cog.listener()
+    async def on_trigger_removed(self) -> None:
+        pass
+
+    @Cog.listener()
     async def on_message(self, message: Message) -> None:
         if message.author == self.bot.user:
             return
