@@ -27,8 +27,10 @@ def is_valid_regex(pattern: str) -> bool:
 
 
 class AddTriggerModal(Modal):
-    def __init__(self, *args, is_regex: bool, **kwargs) -> None:
+    def __init__(self, *args, is_regex: bool, bot: Bot, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+
+        self.bot = bot
 
         self.is_regex = is_regex
         pattern_label = "Trigger {}pattern".format("regex " if is_regex else "")
@@ -92,6 +94,15 @@ class AddTriggerModal(Modal):
             )
         logger.info("Added triggers to db with group_id=%s", group_id)
 
+        # send on_trigger_added event
+        # to update triggers in memory
+        self.bot.dispatch(
+            "trigger_added",
+            patterns=patterns,
+            responses=responses,
+            is_regex=self.is_regex,
+        )
+
         await interaction.respond("Successfully added trigger")
 
 
@@ -137,7 +148,7 @@ class TriggerAdmin(Cog):
             await ctx.respond("Holy cow! You have too many triggers!")
             return
 
-        modal = AddTriggerModal(title="New trigger", is_regex=is_regex)
+        modal = AddTriggerModal(title="New trigger", is_regex=is_regex, bot=self.bot)
         await ctx.send_modal(modal)
 
     @trigger_cmd.command(description="List triggers.")
