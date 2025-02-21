@@ -69,7 +69,7 @@ class AddTriggerModal(Modal):
                 .values(owner=interaction.user.id)
                 .returning(trigger_group.c.id)
             )
-            group_id = result.scalar_one()
+            group_id: int = result.scalar_one()
 
             await session.execute(
                 insert(trigger_pattern),
@@ -101,6 +101,7 @@ class AddTriggerModal(Modal):
             patterns=patterns,
             responses=responses,
             is_regex=self.is_regex,
+            group_id=group_id,
         )
 
         await interaction.respond("Successfully added trigger")
