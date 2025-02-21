@@ -61,7 +61,7 @@ class AddTriggerModal(Modal):
         # TODO confirm if this is how i want to parse responses
         responses = self.children[1].value.splitlines()
 
-        logger.info("Adding new trigger(s) to db")
+        logger.info("Adding new trigger to db")
 
         async with Session.begin() as session:
             result = await session.execute(
@@ -92,7 +92,7 @@ class AddTriggerModal(Modal):
                     for response in responses
                 ],
             )
-        logger.info("Added triggers to db with group_id=%s", group_id)
+        logger.info("Added trigger to db with group_id=%s", group_id)
 
         # send on_trigger_added event
         # to update triggers in memory
