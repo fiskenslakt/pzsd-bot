@@ -77,8 +77,15 @@ class Triggers(Cog):
                 self.normal_triggers[key] = responses
 
     @Cog.listener()
-    async def on_trigger_removed(self) -> None:
-        pass
+    async def on_trigger_removed(self, patterns: List[str], is_regex: bool, group_id: int) -> None:
+        logger.info("Updating triggers in memory")
+
+        for pattern in patterns:
+            key = (group_id, pattern)
+            if is_regex:
+                self.regex_triggers.pop(key, None)
+            else:
+                self.normal_triggers.pop(key, None)
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:

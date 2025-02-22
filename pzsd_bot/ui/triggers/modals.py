@@ -89,7 +89,7 @@ class AddTriggerModal(Modal):
         logger.info("Added trigger to db with group_id=%s", group_id)
 
         # send on_trigger_added event
-        # to update triggers in memory
+        # to add trigger into memory
         self.bot.dispatch(
             "trigger_added",
             patterns=patterns,
@@ -98,4 +98,4 @@ class AddTriggerModal(Modal):
             group_id=group_id,
         )
 
-        await interaction.respond("Successfully added trigger")
+        await interaction.respond("Successfully added trigger", ephemeral=True)

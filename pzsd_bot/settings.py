@@ -31,6 +31,13 @@ class _Channels(EnvSettings):
 Channels = _Channels()
 
 
+class _Roles(EnvSettings):
+    admin: int = 905526348959854593
+
+
+Roles = _Roles()
+
+
 class Colors(Enum):
     white: int = 0xFFFFFF
     red: int = 0xFF0000
