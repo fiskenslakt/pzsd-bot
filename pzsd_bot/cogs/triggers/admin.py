@@ -84,7 +84,9 @@ class TriggerAdmin(Cog):
     @trigger_cmd.command(description="Disable trigger.")
     @option("trigger_id", description="ID of the trigger to disable.")
     async def disable(self, ctx: ApplicationContext, trigger_id: int) -> None:
-        logger.info("%s invoked /trigger disable with id=%s", ctx.author.name, trigger_id)
+        logger.info(
+            "%s invoked /trigger disable with id=%s", ctx.author.name, trigger_id
+        )
 
         is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
 
@@ -97,8 +99,9 @@ class TriggerAdmin(Cog):
             )
 
             trigger_result = await session.execute(
-                select(trigger_pattern.c.pattern, trigger_pattern.c.is_regex)
-                .where(trigger_pattern.c.group_id == trigger_id)
+                select(trigger_pattern.c.pattern, trigger_pattern.c.is_regex).where(
+                    trigger_pattern.c.group_id == trigger_id
+                )
             )
             trigger = trigger_result.all()
 
@@ -120,13 +123,20 @@ class TriggerAdmin(Cog):
 
             await ctx.respond(f"Disabled trigger with id={trigger_id}", ephemeral=True)
         else:
-            logger.info("Trigger didn't exist or user didn't have permission to disable it")
-            await ctx.respond(f"Failed to disable trigger with id={trigger_id} (Doesn't exist or you don't have permission)", ephemeral=True)
+            logger.info(
+                "Trigger didn't exist or user didn't have permission to disable it"
+            )
+            await ctx.respond(
+                f"Failed to disable trigger with id={trigger_id} (Doesn't exist or you don't have permission)",
+                ephemeral=True,
+            )
 
     @trigger_cmd.command(description="Enable trigger.")
     @option("trigger_id", description="ID of the trigger to enable.")
     async def enable(self, ctx: ApplicationContext, trigger_id: int) -> None:
-        logger.info("%s invoked /trigger enable with id=%s", ctx.author.name, trigger_id)
+        logger.info(
+            "%s invoked /trigger enable with id=%s", ctx.author.name, trigger_id
+        )
 
         is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
 
@@ -139,8 +149,15 @@ class TriggerAdmin(Cog):
             )
 
             trigger_result = await session.execute(
-                select(trigger_pattern.c.pattern, trigger_response.c.response, trigger_pattern.c.is_regex)
-                .join(trigger_response, trigger_pattern.c.group_id == trigger_response.c.group_id)
+                select(
+                    trigger_pattern.c.pattern,
+                    trigger_response.c.response,
+                    trigger_pattern.c.is_regex,
+                )
+                .join(
+                    trigger_response,
+                    trigger_pattern.c.group_id == trigger_response.c.group_id,
+                )
                 .where(trigger_pattern.c.group_id == trigger_id)
             )
             trigger = trigger_result.all()
@@ -166,8 +183,13 @@ class TriggerAdmin(Cog):
 
             await ctx.respond(f"Enabled trigger with id={trigger_id}", ephemeral=True)
         else:
-            logger.info("Trigger didn't exist or user didn't have permission to enable it")
-            await ctx.respond(f"Failed to enable trigger with id={trigger_id} (Doesn't exist or you don't have permission)", ephemeral=True)
+            logger.info(
+                "Trigger didn't exist or user didn't have permission to enable it"
+            )
+            await ctx.respond(
+                f"Failed to enable trigger with id={trigger_id} (Doesn't exist or you don't have permission)",
+                ephemeral=True,
+            )
 
 
 def setup(bot: Bot) -> None:
