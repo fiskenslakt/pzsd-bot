@@ -156,7 +156,11 @@ class TriggerAdmin(Cog):
     )
     @default_permissions(administrator=True)
     async def list_all(self, ctx: ApplicationContext, user: Member) -> None:
-        logger.info("%s invoked /trigger list_all with user=%s", ctx.author.name, user)
+        logger.info(
+            "%s invoked /trigger list_all with user=%s",
+            ctx.author.name,
+            getattr(user, "name", None),
+        )
 
         if user is not None:
             trigger_rows = await self.fetch_triggers(trigger_group.c.owner == user.id)
