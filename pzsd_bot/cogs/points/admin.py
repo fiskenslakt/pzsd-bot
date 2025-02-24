@@ -11,6 +11,7 @@ from sqlalchemy import insert, select, update
 from pzsd_bot.db import Session
 from pzsd_bot.model import pzsd_user
 from pzsd_bot.settings import PointsSettings
+from pzsd_bot.ui.buttons import get_page_buttons
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +172,7 @@ class PointUserAdmin(Cog):
             timeout=None,
             author_check=True,
             use_default_buttons=False,
-            custom_buttons=PointsSettings.page_buttons,
+            custom_buttons=get_page_buttons(),
         )
 
         await paginator.respond(ctx.interaction)
