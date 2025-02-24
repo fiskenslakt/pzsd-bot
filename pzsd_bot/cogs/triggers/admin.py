@@ -1,15 +1,17 @@
 import logging
 
-from discord import ApplicationContext, Bot, default_permissions
+from discord import ApplicationContext, Bot, Embed, default_permissions
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
-from sqlalchemy import select, update, func, true, false
+from discord.ext.pages import Paginator
+from sqlalchemy import false, func, select, true, update
 from sqlalchemy.sql.functions import count
 
-from pzsd_bot.ui.triggers.modals import AddTriggerModal
 from pzsd_bot.db import Session
 from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
 from pzsd_bot.settings import Roles
+from pzsd_bot.ui.buttons import get_page_buttons
+from pzsd_bot.ui.triggers.modals import AddTriggerModal
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +71,76 @@ class TriggerAdmin(Cog):
     @trigger_cmd.command(description="List triggers from all users.")
     @default_permissions(administrator=True)
     async def list_all(self, ctx: ApplicationContext) -> None:
-        pass
+        logger.info("%s invoked /trigger list_all", ctx.author.name)
+
+        TP = trigger_pattern.columns
+        TR = trigger_response.columns
+        TG = trigger_group.columns
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(
+                    TG.id,
+                    TG.is_active,
+                    TP.is_regex,
+                    TG.owner,
+                    TG.created_at,
+                    TG.updated_at,
+                    TP.pattern,
+                    TR.response,
+                )
+                .join(trigger_group, TP.group_id == TG.id)
+                .join(trigger_response, TG.id == TR.group_id)
+            )
+            trigger_rows = result.all()
+
+        triggers = {}
+        for trigger in trigger_rows:
+            if trigger.id not in triggers:
+                triggers[trigger.id] = {
+                    "trigger_id": trigger.id,
+                    "is_regex": trigger.is_regex,
+                    "is_active": trigger.is_active,
+                    "owner": f"<@{trigger.owner}>",
+                    "created_at": f"<t:{int(trigger.created_at.timestamp())}:f>",
+                    "updated_at": f"<t:{int(trigger.updated_at.timestamp())}:f>",
+                    "pattern": [trigger.pattern],
+                    "response": [trigger.response],
+                }
+            else:
+                triggers[trigger.id]["pattern"].append(trigger.pattern)
+                triggers[trigger.id]["response"].append(trigger.response)
+
+        pages = []
+        for trigger in sorted(triggers.values(), key=lambda t: t["pattern"][0]):
+            embed = Embed(title="All Triggers")
+            patterns = ",".join(dict.fromkeys(trigger["pattern"]))
+
+            responses = list(dict.fromkeys(trigger["response"]))
+            embed.description = f"# {patterns}\n### Responses:\n"
+            for response in responses:
+                embed.description += f"* {response}\n"
+
+            value = "Trigger ID: {}\nowner: {}\nis_active: {}\nis_regex: {}\ncreated_at: {}\nupdated_at: {}".format(
+                trigger["trigger_id"],
+                trigger["owner"],
+                trigger["is_active"],
+                trigger["is_regex"],
+                trigger["created_at"],
+                trigger["updated_at"],
+            )
+            embed.add_field(name="Metadata:", value=value)
+            pages.append(embed)
+
+        if pages:
+            paginator = Paginator(
+                pages=pages,
+                use_default_buttons=False,
+                custom_buttons=get_page_buttons(),
+            )
+
+            await paginator.respond(ctx.interaction, ephemeral=True)
+        else:
+            ctx.respond("No triggers exist", ephemeral=True)
 
     @trigger_cmd.command(description="Edit trigger.")
     @option("trigger_id", description="ID of the trigger to edit.")
