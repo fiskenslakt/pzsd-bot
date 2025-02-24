@@ -2,8 +2,6 @@ import re
 from enum import Enum
 from pathlib import Path
 
-import discord
-from discord.ext.pages import PaginatorButton
 from pydantic_settings import BaseSettings
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -107,18 +105,6 @@ class _PointsSettings(EnvSettings):
         r"(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) +points?",
         re.IGNORECASE,
     )
-
-    @property
-    def page_buttons(self) -> list[PaginatorButton]:
-        return [
-            PaginatorButton("first", label="<<", style=discord.ButtonStyle.blurple),
-            PaginatorButton("prev", label="←", style=discord.ButtonStyle.blurple),
-            PaginatorButton(
-                "page_indicator", style=discord.ButtonStyle.gray, disabled=True
-            ),
-            PaginatorButton("next", label="→", style=discord.ButtonStyle.blurple),
-            PaginatorButton("last", label=">>", style=discord.ButtonStyle.blurple),
-        ]
 
 
 PointsSettings = _PointsSettings()
