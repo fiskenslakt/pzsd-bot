@@ -14,7 +14,7 @@ from pzsd_bot.db import Session
 from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
 from pzsd_bot.settings import Roles
 from pzsd_bot.ui.buttons import get_page_buttons
-from pzsd_bot.ui.triggers.modals import AddTriggerModal
+from pzsd_bot.ui.triggers.modals import AddTriggerModal, EditTriggerModal
 
 logger = logging.getLogger(__name__)
 
@@ -182,7 +182,51 @@ class TriggerAdmin(Cog):
     @trigger_cmd.command(description="Edit trigger.")
     @option("trigger_id", description="ID of the trigger to edit.")
     async def edit(self, ctx: ApplicationContext, trigger_id: int) -> None:
-        pass
+        logger.info("%s invoked /trigger edit with id=%s", ctx.author.name, trigger_id)
+
+        is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
+
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(
+                    trigger_pattern.c.pattern,
+                    trigger_response.c.response,
+                    trigger_pattern.c.is_regex,
+                )
+                .join(
+                    trigger_response,
+                    trigger_pattern.c.group_id == trigger_response.c.group_id,
+                )
+                .join(trigger_group, trigger_group.c.id == trigger_response.c.group_id)
+                .where(trigger_group.c.id == trigger_id)
+                .where(is_admin | (trigger_group.c.owner == ctx.author.id))
+            )
+            trigger = result.all()
+
+        if not trigger:
+            logger.info(
+                "Trigger with id=%s doesn't exist or user doesn't have permission to edit it",
+                trigger_id,
+            )
+            await ctx.respond(
+                "Failed to edit trigger (doesn't exist or you don't have permission to edit it)",
+                ephemeral=True,
+            )
+            return
+
+        patterns = [t.pattern for t in trigger]
+        responses = [t.response for t in trigger]
+        is_regex = trigger[0].is_regex
+
+        modal = EditTriggerModal(
+            title="Edit trigger",
+            patterns=patterns,
+            responses=responses,
+            is_regex=is_regex,
+            group_id=trigger_id,
+            bot=self.bot,
+        )
+        await ctx.send_modal(modal)
 
     @trigger_cmd.command(description="Delete trigger.")
     @option("trigger_id", description="ID of the trigger to delete.")
