@@ -5,7 +5,7 @@ from discord import ApplicationContext, Bot, Embed, Member, default_permissions
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
 from discord.ext.pages import Paginator
-from sqlalchemy import false, func, select, true, update
+from sqlalchemy import delete, false, func, select, true, update
 from sqlalchemy.engine import Row
 from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import count
@@ -187,7 +187,51 @@ class TriggerAdmin(Cog):
     @trigger_cmd.command(description="Delete trigger.")
     @option("trigger_id", description="ID of the trigger to delete.")
     async def delete(self, ctx: ApplicationContext, trigger_id: int) -> None:
-        pass
+        logger.info(
+            "%s invoked /trigger delete with id=%s", ctx.author.name, trigger_id
+        )
+
+        is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
+
+        async with Session.begin() as session:
+            trigger_result = await session.execute(
+                select(trigger_pattern.c.pattern, trigger_pattern.c.is_regex).where(
+                    trigger_pattern.c.group_id == trigger_id
+                )
+            )
+            trigger = trigger_result.all()
+
+            result = await session.execute(
+                delete(trigger_group)
+                .where(trigger_group.c.id == trigger_id)
+                .where(is_admin | (trigger_group.c.owner == ctx.author.id))
+            )
+
+        if result.rowcount > 0:
+            logger.info("Deleted trigger with id=%s", trigger_id)
+
+            patterns = []
+            for t in trigger:
+                patterns.append(t.pattern)
+
+            # send on_trigger_removed event
+            # to remove trigger from memory
+            self.bot.dispatch(
+                "trigger_removed",
+                patterns=patterns,
+                is_regex=t.is_regex,
+                group_id=trigger_id,
+            )
+
+            await ctx.respond(f"Deleted trigger with id={trigger_id}", ephemeral=True)
+        else:
+            logger.info(
+                "Trigger didn't exist or user didn't have permission to delete it"
+            )
+            await ctx.respond(
+                f"Failed to delete trigger with id={trigger_id} (Doesn't exist or you don't have permission)",
+                ephemeral=True,
+            )
 
     @trigger_cmd.command(description="Disable trigger.")
     @option("trigger_id", description="ID of the trigger to disable.")
