@@ -67,7 +67,7 @@ class Triggers(Cog):
         is_regex: bool,
         group_id: int,
     ) -> None:
-        logger.info("Updating triggers in memory")
+        logger.info("Trigger was added, updating triggers in memory")
 
         for pattern in patterns:
             key = (group_id, pattern)
@@ -80,7 +80,7 @@ class Triggers(Cog):
     async def on_trigger_removed(
         self, patterns: List[str], is_regex: bool, group_id: int
     ) -> None:
-        logger.info("Updating triggers in memory")
+        logger.info("Trigger was removed, updating triggers in memory")
 
         for pattern in patterns:
             key = (group_id, pattern)
