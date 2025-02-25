@@ -90,6 +90,31 @@ class Triggers(Cog):
                 self.normal_triggers.pop(key, None)
 
     @Cog.listener()
+    async def on_trigger_modified(
+        self,
+        old_patterns: List[str],
+        new_patterns: List[str],
+        new_responses: List[str],
+        is_regex: bool,
+        group_id: int,
+    ) -> None:
+        logger.info("Trigger was modified, updating triggers in memory")
+
+        for old_pattern in old_patterns:
+            old_key = (group_id, old_pattern)
+            if is_regex:
+                self.regex_triggers.pop(old_key, None)
+            else:
+                self.normal_triggers.pop(old_key, None)
+
+        for new_pattern in new_patterns:
+            new_key = (group_id, new_pattern)
+            if is_regex:
+                self.regex_triggers[new_key] = new_responses
+            else:
+                self.normal_triggers[new_key] = new_responses
+
+    @Cog.listener()
     async def on_message(self, message: Message) -> None:
         if message.author == self.bot.user:
             return
