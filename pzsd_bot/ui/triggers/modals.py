@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from discord import Bot, InputTextStyle, Interaction
 from discord.ui import InputText, Modal
@@ -46,7 +46,9 @@ class TriggerModalMixin:
 
 
 class AddTriggerModal(Modal, TriggerModalMixin):
-    def __init__(self, *args, is_regex: bool, bot: Bot, **kwargs) -> None:
+    def __init__(
+        self, *args: Tuple[Any, ...], is_regex: bool, bot: Bot, **kwargs: Dict[str, Any]
+    ) -> None:
         super().__init__(*args, **kwargs)
 
         self.bot = bot
@@ -124,13 +126,13 @@ class AddTriggerModal(Modal, TriggerModalMixin):
 class EditTriggerModal(Modal, TriggerModalMixin):
     def __init__(
         self,
-        *args,
+        *args: Tuple[Any, ...],
         patterns: List[str],
         responses: List[str],
         is_regex: bool,
         group_id: int,
         bot: Bot,
-        **kwargs,
+        **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(*args, **kwargs)
 
