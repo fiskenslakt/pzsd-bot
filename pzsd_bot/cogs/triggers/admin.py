@@ -291,7 +291,7 @@ class TriggerAdmin(Cog):
                 update(trigger_group)
                 .where(trigger_group.c.id == trigger_id)
                 .where(is_admin | (trigger_group.c.owner == ctx.author.id))
-                .values(is_active=False)
+                .values(is_active=False, updated_at=func.now())
             )
 
             trigger_result = await session.execute(
