@@ -89,7 +89,7 @@ class _PointsSettings(EnvSettings):
             "these",
         }
     )
-    valid_name_pattern: re.Pattern = re.compile(r"[\w '-]+")
+    valid_name_pattern: re.Pattern = re.compile(r"[a-zA-Z0-9_ '-]+")
     point_pattern: re.Pattern = re.compile(
         r"(?:^| )(?P<point_amount>[+-]?(?:\d+|\d{1,3}(?:,\d{3})*)) "
         r"+points? to "
