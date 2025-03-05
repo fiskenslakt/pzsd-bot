@@ -35,7 +35,7 @@ class _TriggerModalMixin:
                     interaction.user.name,
                 )
                 await interaction.respond("Invalid regex, failed to add trigger.")
-                return None
+                return
         else:
             patterns = self.children[0].value.lower().split(",")
 
