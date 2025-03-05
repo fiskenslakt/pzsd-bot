@@ -4,6 +4,7 @@ from sqlalchemy import (
     Column,
     DateTime,
     ForeignKey,
+    Integer,
     MetaData,
     Table,
     Text,
@@ -43,4 +44,41 @@ ledger = Table(
     Column("recipient", ForeignKey("pzsd_user.id"), nullable=False),
     Column("points", BigInteger, nullable=False),
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
+)
+
+trigger_group = Table(
+    "trigger_group",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("is_active", Boolean, nullable=False, server_default=text("true")),
+    Column("owner", BigInteger, nullable=False),  # discord ID
+    Column("created_at", DateTime, server_default=func.now(), nullable=False),
+    Column("updated_at", DateTime, server_default=func.now(), nullable=False),
+)
+
+trigger_pattern = Table(
+    "trigger_pattern",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("pattern", Text, nullable=False),
+    Column(
+        "group_id",
+        Integer,
+        ForeignKey("trigger_group.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("is_regex", Boolean, nullable=False),
+)
+
+trigger_response = Table(
+    "trigger_response",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column(
+        "group_id",
+        Integer,
+        ForeignKey("trigger_group.id", ondelete="CASCADE"),
+        nullable=False,
+    ),
+    Column("response", Text, nullable=False),
 )

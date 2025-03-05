@@ -18,7 +18,8 @@ from pzsd_bot.db import Session
 from pzsd_bot.ext.pagination import Paginator
 from pzsd_bot.ext.scheduler import Scheduler
 from pzsd_bot.model import ledger, pzsd_user
-from pzsd_bot.settings import Channels, Colors, PointsSettings
+from pzsd_bot.settings import Channels, Colors
+from pzsd_bot.ui.buttons import get_page_buttons
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +139,7 @@ class PointLeaderboard(Cog):
                 timeout=None,
                 author_check=False,
                 use_default_buttons=False,
-                custom_buttons=PointsSettings.page_buttons,
+                custom_buttons=get_page_buttons(),
             )
         else:
             paginator = None
@@ -179,7 +180,7 @@ class PointLeaderboard(Cog):
             timeout=None,
             author_check=False,
             use_default_buttons=False,
-            custom_buttons=PointsSettings.page_buttons,
+            custom_buttons=get_page_buttons(),
         )
 
         await paginator.respond(ctx.interaction)
