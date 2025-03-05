@@ -27,7 +27,7 @@ class _TriggerModalMixin:
     ) -> Tuple[List[str], List[str]] | None:
         if self.is_regex:
             pattern = self.children[0].value
-            if pattern and self.is_valid_regex(pattern):
+            if self.is_valid_regex(pattern):
                 patterns = [pattern]
             else:
                 logger.info(
