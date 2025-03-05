@@ -28,15 +28,15 @@ class Triggers(Cog):
 
     async def load_triggers(self):
         logger.info("Loading triggers into memory")
-        TP = trigger_pattern.columns
-        TR = trigger_response.columns
-        TG = trigger_group.columns
+        tp = trigger_pattern.columns
+        tr = trigger_response.columns
+        tg = trigger_group.columns
         async with Session.begin() as session:
             result = await session.execute(
-                select(TP.group_id, TP.pattern, TP.is_regex, TR.response)
-                .join(trigger_group, TP.group_id == TG.id)
-                .join(trigger_response, TG.id == TR.group_id)
-                .where(TG.is_active == True)
+                select(tp.group_id, tp.pattern, tp.is_regex, tr.response)
+                .join(trigger_group, tp.group_id == tg.id)
+                .join(trigger_response, tg.id == tr.group_id)
+                .where(tg.is_active == True)
             )
             triggers = result.all()
 
