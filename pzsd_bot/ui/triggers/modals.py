@@ -39,7 +39,6 @@ class _TriggerModalMixin:
         else:
             patterns = self.children[0].value.lower().split(",")
 
-        # TODO confirm if this is how i want to parse responses
         responses = self.children[1].value.splitlines()
 
         return patterns, responses
