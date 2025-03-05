@@ -12,7 +12,7 @@ from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
 logger = logging.getLogger(__name__)
 
 
-class TriggerModalMixin:
+class _TriggerModalMixin:
     @staticmethod
     def is_valid_regex(pattern: str) -> bool:
         try:
@@ -45,7 +45,7 @@ class TriggerModalMixin:
         return patterns, responses
 
 
-class AddTriggerModal(Modal, TriggerModalMixin):
+class AddTriggerModal(Modal, _TriggerModalMixin):
     def __init__(
         self, *args: Tuple[Any, ...], is_regex: bool, bot: Bot, **kwargs: Dict[str, Any]
     ) -> None:
@@ -123,7 +123,7 @@ class AddTriggerModal(Modal, TriggerModalMixin):
         await interaction.respond("Successfully added trigger", ephemeral=True)
 
 
-class EditTriggerModal(Modal, TriggerModalMixin):
+class EditTriggerModal(Modal, _TriggerModalMixin):
     def __init__(
         self,
         *args: Tuple[Any, ...],
