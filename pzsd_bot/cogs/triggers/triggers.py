@@ -43,7 +43,7 @@ class Triggers(Cog):
         normal_trigger_groups = set()
         regex_trigger_groups = set()
         for trigger in triggers:
-            key = (trigger.group_id, trigger.pattern)
+            key = trigger.group_id, trigger.pattern
             if trigger.is_regex:
                 self.regex_triggers[key].append(trigger.response)
                 regex_trigger_groups.add(trigger.group_id)
@@ -70,7 +70,7 @@ class Triggers(Cog):
         logger.info("Trigger was added, updating triggers in memory")
 
         for pattern in patterns:
-            key = (group_id, pattern)
+            key = group_id, pattern
             if is_regex:
                 self.regex_triggers[key] = responses
             else:
@@ -83,7 +83,7 @@ class Triggers(Cog):
         logger.info("Trigger was removed, updating triggers in memory")
 
         for pattern in patterns:
-            key = (group_id, pattern)
+            key = group_id, pattern
             if is_regex:
                 self.regex_triggers.pop(key, None)
             else:
@@ -101,14 +101,14 @@ class Triggers(Cog):
         logger.info("Trigger was modified, updating triggers in memory")
 
         for old_pattern in old_patterns:
-            old_key = (group_id, old_pattern)
+            old_key = group_id, old_pattern
             if is_regex:
                 self.regex_triggers.pop(old_key, None)
             else:
                 self.normal_triggers.pop(old_key, None)
 
         for new_pattern in new_patterns:
-            new_key = (group_id, new_pattern)
+            new_key = group_id, new_pattern
             if is_regex:
                 self.regex_triggers[new_key] = new_responses
             else:
