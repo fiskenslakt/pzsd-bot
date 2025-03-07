@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from discord import ApplicationContext, Bot, Embed, Member, default_permissions
+from discord import ApplicationContext, Bot, Embed, Member
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
 from discord.ext.pages import Paginator
@@ -154,7 +154,6 @@ class TriggerAdmin(Cog):
     @option(
         "user", description="Only show triggers from a specific user.", required=False
     )
-    @default_permissions(administrator=True)
     async def list_all(self, ctx: ApplicationContext, user: Member) -> None:
         logger.info(
             "%s invoked /trigger list_all with user=%s",
