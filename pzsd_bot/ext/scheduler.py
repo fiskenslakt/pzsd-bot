@@ -36,7 +36,7 @@ class Scheduler:
         task.add_done_callback(partial(self._task_done_callback, task_id))
 
         self.tasks[task_id] = task
-        self._logger.info("Scheduled task with id=%s", task_id)
+        self._logger.debug("Scheduled task with id=%s", task_id)
 
     def schedule(
         self, run_at: datetime, task_id: str, coroutine: abc.Coroutine
