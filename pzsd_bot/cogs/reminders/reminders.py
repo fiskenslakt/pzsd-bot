@@ -28,9 +28,9 @@ DURATION_PATTERN = re.compile(
         r"((?P<months>\d+?) ?(months|month|m) ?)?"
         r"((?P<weeks>\d+?) ?(weeks|week|W|w) ?)?"
         r"((?P<days>\d+?) ?(days|day|D|d) ?)?"
-        r"((?P<hours>\d+?) ?(hours|hour|H|h) ?)?"
-        r"((?P<minutes>\d+?) ?(minutes|minute|M) ?)?"
-        r"((?P<seconds>\d+?) ?(seconds|second|S|s))?"
+        r"((?P<hours>\d+?) ?(hours|hour|hrs?|H|h) ?)?"
+        r"((?P<minutes>\d+?) ?(minutes|minute|min|M) ?)?"
+        r"((?P<seconds>\d+?) ?(seconds|second|secs?|S|s))?"
     )
 )
 
