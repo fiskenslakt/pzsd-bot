@@ -259,7 +259,9 @@ class Reminders(Cog):
                 coroutine=self.send_reminder(new_reminder),
             )
             await message.add_reaction(Emoji.check_mark)
-            abbreviated_reminder_invocation = m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
+            abbreviated_reminder_invocation = (
+                m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
+            )
             logger.info(
                 "%s created a reminder: '%s'",
                 message.author.name,
