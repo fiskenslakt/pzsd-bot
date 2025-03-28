@@ -52,8 +52,6 @@ class Reminders(Cog):
                 unit: int(amount) for unit, amount in m.groupdict(default=0).items()
             }
             return pendulum.duration(**duration)
-        else:
-            return
 
     @staticmethod
     def parse_absolute_time(time: str, timezone: str) -> pendulum.DateTime | None:
