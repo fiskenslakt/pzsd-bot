@@ -151,120 +151,122 @@ class Reminders(Cog):
         if message.author == self.bot.user:
             return
 
-        if m := REMINDER_PATTERN.search(message.content):
-            if m["preposition"].lower() == "in":
-                duration = self.parse_relative_time(m["time"])
-                if duration:
-                    remind_at = pendulum.now() + duration
-                else:
-                    remind_at = None
-            elif m["preposition"].lower() in ("at", "on"):
-                async with Session.begin() as session:
-                    result = await session.execute(
-                        select(pzsd_user.c.timezone).where(
-                            pzsd_user.c.discord_snowflake == str(message.author.id)
-                        )
+        if (m := REMINDER_PATTERN.search(message.content)) is None:
+            return
+
+        if m["preposition"].lower() == "in":
+            duration = self.parse_relative_time(m["time"])
+            if duration:
+                remind_at = pendulum.now() + duration
+            else:
+                remind_at = None
+        elif m["preposition"].lower() in ("at", "on"):
+            async with Session.begin() as session:
+                result = await session.execute(
+                    select(pzsd_user.c.timezone).where(
+                        pzsd_user.c.discord_snowflake == str(message.author.id)
                     )
-                    user_tz = result.scalar_one_or_none()
+                )
+                user_tz = result.scalar_one_or_none()
 
-                try:
-                    remind_at = self.parse_absolute_time(m["time"], user_tz or "UTC")
-                except pendulum.tz.exceptions.InvalidTimezone:
-                    logger.warning("%s has invalid timezone set", message.author.name)
-                    remind_at = None
-                except Exception:
-                    logger.exception("Failed to parse time: '%s'", m["time"])
-                    remind_at = None
+            try:
+                remind_at = self.parse_absolute_time(m["time"], user_tz or "UTC")
+            except pendulum.tz.exceptions.InvalidTimezone:
+                logger.warning("%s has invalid timezone set", message.author.name)
+                remind_at = None
+            except Exception:
+                logger.exception("Failed to parse time: '%s'", m["time"])
+                remind_at = None
 
-            if remind_at is None:
+        if remind_at is None:
+            logger.info(
+                "%s gave invalid time format: '%s'", message.author.name, m["time"]
+            )
+            await message.add_reaction(Emoji.cross_mark)
+            return
+
+        is_recurring = m["interval"] is not None
+        if is_recurring:
+            interval = self.parse_relative_time(m["interval"])
+            if interval is None:
                 logger.info(
-                    "%s gave invalid time format: '%s'", message.author.name, m["time"]
+                    "%s gave invalid interval format: '%s'",
+                    message.author.name,
+                    m["interval"],
                 )
                 await message.add_reaction(Emoji.cross_mark)
                 return
-
-            is_recurring = m["interval"] is not None
-            if is_recurring:
-                interval = self.parse_relative_time(m["interval"])
-                if interval is None:
-                    logger.info(
-                        "%s gave invalid interval format: '%s'",
-                        message.author.name,
-                        m["interval"],
-                    )
-                    await message.add_reaction(Emoji.cross_mark)
-                    return
-                elif interval < MINIMUM_INTERVAL_FREQUENCY:
-                    logger.info(
-                        "%s gave an interval that's too short: '%s'",
-                        message.author.name,
-                        m["interval"],
-                    )
-                    await message.add_reaction(Emoji.nopers)
-                    return
-                elif interval > MAXIMUM_INTERVAL_FREQUENCY:
-                    logger.info(
-                        "%s gave an interval that's too long: '%s'",
-                        message.author.name,
-                        m["interval"],
-                    )
-                    await message.add_reaction(Emoji.nopers)
-                    return
-            else:
-                interval = None
-
-            if interval:
-                recurrence_interval = interval.in_seconds()
-            else:
-                recurrence_interval = None
-
-            async with Session.begin() as session:
-                result = await session.execute(
-                    select(count())
-                    .select_from(reminder)
-                    .where(reminder.c.owner == message.author.id)
-                    .where(reminder.c.status == ReminderStatus.pending)
+            elif interval < MINIMUM_INTERVAL_FREQUENCY:
+                logger.info(
+                    "%s gave an interval that's too short: '%s'",
+                    message.author.name,
+                    m["interval"],
                 )
-                reminder_count = result.scalar_one()
+                await message.add_reaction(Emoji.nopers)
+                return
+            elif interval > MAXIMUM_INTERVAL_FREQUENCY:
+                logger.info(
+                    "%s gave an interval that's too long: '%s'",
+                    message.author.name,
+                    m["interval"],
+                )
+                await message.add_reaction(Emoji.nopers)
+                return
+        else:
+            interval = None
 
-                if reminder_count < ReminderSettings.max_reminders:
-                    result = await session.execute(
-                        insert(reminder)
-                        .values(
-                            owner=message.author.id,
-                            channel_id=message.channel.id,
-                            original_message_id=message.id,
-                            reminder_text=m["reminder"],
-                            remind_at=remind_at,
-                            is_recurring=is_recurring,
-                            recurrence_interval=recurrence_interval,
-                        )
-                        .returning(reminder)
-                    )
-                    new_reminder = result.one()
-                else:
-                    logger.info(
-                        "%s tried creating a reminder but it would exceed the max allowed (%s)",
-                        message.author.name,
-                        ReminderSettings.max_reminders,
-                    )
-                    await message.add_reaction(Emoji.nopers)
-                    return
+        if interval:
+            recurrence_interval = interval.in_seconds()
+        else:
+            recurrence_interval = None
 
-            self.scheduler.schedule(
-                run_at=new_reminder.remind_at,
-                task_id=f"reminder_{new_reminder.id}",
-                coroutine=self.send_reminder(new_reminder),
+        async with Session.begin() as session:
+            result = await session.execute(
+                select(count())
+                .select_from(reminder)
+                .where(reminder.c.owner == message.author.id)
+                .where(reminder.c.status == ReminderStatus.pending)
             )
-            await message.add_reaction(Emoji.check_mark)
-            abbreviated_reminder_invocation = (
-                m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
-            )
-            logger.info(
-                "%s created a reminder: '%s'",
-                message.author.name,
-                abbreviated_reminder_invocation,
-            )
+            reminder_count = result.scalar_one()
+
+            if reminder_count < ReminderSettings.max_reminders:
+                result = await session.execute(
+                    insert(reminder)
+                    .values(
+                        owner=message.author.id,
+                        channel_id=message.channel.id,
+                        original_message_id=message.id,
+                        reminder_text=m["reminder"],
+                        remind_at=remind_at,
+                        is_recurring=is_recurring,
+                        recurrence_interval=recurrence_interval,
+                    )
+                    .returning(reminder)
+                )
+                new_reminder = result.one()
+            else:
+                logger.info(
+                    "%s tried creating a reminder but it would exceed the max allowed (%s)",
+                    message.author.name,
+                    ReminderSettings.max_reminders,
+                )
+                await message.add_reaction(Emoji.nopers)
+                return
+
+        self.scheduler.schedule(
+            run_at=new_reminder.remind_at,
+            task_id=f"reminder_{new_reminder.id}",
+            coroutine=self.send_reminder(new_reminder),
+        )
+        await message.add_reaction(Emoji.check_mark)
+        abbreviated_reminder_invocation = (
+            m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
+        )
+        logger.info(
+            "%s created a reminder: '%s'",
+            message.author.name,
+            abbreviated_reminder_invocation,
+        )
 
 
 def setup(bot: Bot) -> None:
