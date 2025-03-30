@@ -1,8 +1,11 @@
+import enum
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
     Column,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
     MetaData,
@@ -12,6 +15,12 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import UUID
+
+
+class ReminderStatus(enum.Enum):
+    pending = "pending"
+    failed = "failed"
+
 
 metadata = MetaData()
 
@@ -29,6 +38,7 @@ pzsd_user = Table(
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
     Column("is_active", Boolean, nullable=False, server_default=text("true")),
     Column("point_giver", Boolean, nullable=False, server_default=text("false")),
+    Column("timezone", Text, nullable=True),
 )
 
 ledger = Table(
@@ -81,4 +91,24 @@ trigger_response = Table(
         nullable=False,
     ),
     Column("response", Text, nullable=False),
+)
+
+reminder = Table(
+    "reminder",
+    metadata,
+    Column("id", Integer, primary_key=True, autoincrement=True),
+    Column("owner", BigInteger, nullable=False),  # discord ID
+    Column("channel_id", BigInteger, nullable=False),
+    Column("original_message_id", BigInteger, nullable=False),
+    Column("reminder_text", Text, nullable=True),
+    Column("remind_at", DateTime(timezone=True), nullable=False),
+    Column("created_at", DateTime, server_default=func.now(), nullable=False),
+    Column("is_recurring", Boolean, nullable=False),
+    Column("recurrence_interval", Integer, nullable=True),  # in seconds
+    Column(
+        "status",
+        Enum(ReminderStatus),
+        nullable=False,
+        default=ReminderStatus.pending,
+    ),
 )

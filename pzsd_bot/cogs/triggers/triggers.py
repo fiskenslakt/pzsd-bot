@@ -26,7 +26,7 @@ class Triggers(Cog):
 
         asyncio.create_task(self.load_triggers())
 
-    async def load_triggers(self):
+    async def load_triggers(self) -> None:
         logger.info("Loading triggers into memory")
         tp = trigger_pattern.columns
         tr = trigger_response.columns

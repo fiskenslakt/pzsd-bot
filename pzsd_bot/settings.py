@@ -117,6 +117,13 @@ class _DiceSettings(EnvSettings):
 DiceSettings = _DiceSettings()
 
 
+class _ReminderSettings(EnvSettings):
+    max_reminders: int = 5
+
+
+ReminderSettings = _ReminderSettings()
+
+
 class _Emoji(EnvSettings):
     dice_0: str = "<:dice_0:1296590662887542907>"
     dice_1: str = "<:dice_1:1296590681229230252>"
