@@ -194,6 +194,16 @@ class RemindersAdmin(Cog):
             )
 
         if result.rowcount > 0:
+            # Cancel scheduled job for respective reminder
+            reminders_cog = self.bot.get_cog("Reminders")
+            if reminders_cog:
+                reminders_cog.scheduler.cancel(f"reminder_{reminder_id}")
+            else:
+                logger.warning(
+                    "Can't find Reminders cog, failed to cancel reminder with id=%s",
+                    reminder_id,
+                )
+
             logger.info("Deleted reminder with id=%s", reminder_id)
 
             await ctx.respond(f"Deleted reminder with id={reminder_id}", ephemeral=True)
