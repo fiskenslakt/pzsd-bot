@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from discord import ApplicationContext, Bot, Embed, Member
+from discord import ApplicationContext, Bot, Embed, Member, OptionChoice
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
 from discord.ext.pages import Paginator
@@ -21,6 +21,14 @@ logger = logging.getLogger(__name__)
 NORMAL_TRIGGERS_LIMIT = 200
 REGEX_TRIGGERS_LIMIT = 100
 
+TRIGGER_COLUMNS = [
+    OptionChoice(name="Pattern", value="pattern"),
+    OptionChoice(name="Creation time", value="created_at"),
+    OptionChoice(name="Last updated", value="updated_at"),
+    OptionChoice(name="ID", value="id"),
+    OptionChoice(name="Author", value="owner"),
+]
+
 
 class TriggerAdmin(Cog):
     trigger_cmd = SlashCommandGroup("trigger", "Manage triggers.")
@@ -28,10 +36,21 @@ class TriggerAdmin(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    async def fetch_triggers(self, *args: List[BinaryExpression]) -> List[Row]:
+    async def fetch_triggers(
+        self, *args: List[BinaryExpression], sort_col: str = "pattern"
+    ) -> List[Row]:
         TP = trigger_pattern.columns
         TR = trigger_response.columns
         TG = trigger_group.columns
+
+        col_map = {
+            "pattern": TP.pattern,
+            "created_at": TG.created_at,
+            "updated_at": TG.updated_at,
+            "id": TG.id,
+            "owner": TG.owner,
+        }
+
         async with Session.begin() as session:
             result = await session.execute(
                 select(
@@ -47,6 +66,7 @@ class TriggerAdmin(Cog):
                 .join(trigger_group, TP.group_id == TG.id)
                 .join(trigger_response, TG.id == TR.group_id)
                 .where(*args)
+                .order_by(col_map[sort_col])
             )
             trigger_rows = result.all()
 
@@ -71,7 +91,7 @@ class TriggerAdmin(Cog):
                 triggers[trigger.id]["response"].append(trigger.response)
 
         pages = []
-        for trigger in sorted(triggers.values(), key=lambda t: t["pattern"][0]):
+        for trigger in triggers.values():
             embed = Embed(title="All Triggers")
             patterns = ",".join(dict.fromkeys(trigger["pattern"]))
 
@@ -133,10 +153,19 @@ class TriggerAdmin(Cog):
         await ctx.send_modal(modal)
 
     @trigger_cmd.command(description="List triggers.")
-    async def list(self, ctx: ApplicationContext) -> None:
+    @option(
+        "sort_by",
+        description="Sort triggers by provided column",
+        required=False,
+        choices=TRIGGER_COLUMNS,
+        default="pattern",
+    )
+    async def list(self, ctx: ApplicationContext, sort_by: str) -> None:
         logger.info("%s invoked /trigger list", ctx.author.name)
 
-        trigger_rows = await self.fetch_triggers(trigger_group.c.owner == ctx.author.id)
+        trigger_rows = await self.fetch_triggers(
+            trigger_group.c.owner == ctx.author.id, sort_col=sort_by
+        )
 
         pages = self.make_trigger_pages(trigger_rows)
         if pages:
@@ -154,7 +183,16 @@ class TriggerAdmin(Cog):
     @option(
         "user", description="Only show triggers from a specific user.", required=False
     )
-    async def list_all(self, ctx: ApplicationContext, user: Member) -> None:
+    @option(
+        "sort_by",
+        description="Sort triggers by provided column",
+        required=False,
+        choices=TRIGGER_COLUMNS,
+        default="pattern",
+    )
+    async def list_all(
+        self, ctx: ApplicationContext, user: Member, sort_by: str
+    ) -> None:
         logger.info(
             "%s invoked /trigger list_all with user=%s",
             ctx.author.name,
@@ -162,9 +200,11 @@ class TriggerAdmin(Cog):
         )
 
         if user is not None:
-            trigger_rows = await self.fetch_triggers(trigger_group.c.owner == user.id)
+            trigger_rows = await self.fetch_triggers(
+                trigger_group.c.owner == user.id, sort_col=sort_by
+            )
         else:
-            trigger_rows = await self.fetch_triggers()
+            trigger_rows = await self.fetch_triggers(sort_col=sort_by)
 
         pages = self.make_trigger_pages(trigger_rows)
         if pages:
