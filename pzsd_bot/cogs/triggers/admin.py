@@ -1,7 +1,7 @@
 import logging
 from typing import List
 
-from discord import ApplicationContext, Bot, Embed, Member
+from discord import ApplicationContext, Bot, Embed, Member, OptionChoice
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
 from discord.ext.pages import Paginator
@@ -20,6 +20,14 @@ logger = logging.getLogger(__name__)
 
 NORMAL_TRIGGERS_LIMIT = 200
 REGEX_TRIGGERS_LIMIT = 100
+
+TRIGGER_COLUMNS = [
+    OptionChoice(name="Pattern", value="pattern"),
+    OptionChoice(name="Creation time", value="created_at"),
+    OptionChoice(name="Last updated", value="updated_at"),
+    OptionChoice(name="ID", value="id"),
+    OptionChoice(name="Author", value="owner"),
+]
 
 
 class TriggerAdmin(Cog):
@@ -145,10 +153,19 @@ class TriggerAdmin(Cog):
         await ctx.send_modal(modal)
 
     @trigger_cmd.command(description="List triggers.")
-    async def list(self, ctx: ApplicationContext) -> None:
+    @option(
+        "sort_by",
+        description="Sort triggers by provided column",
+        required=False,
+        choices=TRIGGER_COLUMNS,
+        default="pattern",
+    )
+    async def list(self, ctx: ApplicationContext, sort_by: str) -> None:
         logger.info("%s invoked /trigger list", ctx.author.name)
 
-        trigger_rows = await self.fetch_triggers(trigger_group.c.owner == ctx.author.id)
+        trigger_rows = await self.fetch_triggers(
+            trigger_group.c.owner == ctx.author.id, sort_col=sort_by
+        )
 
         pages = self.make_trigger_pages(trigger_rows)
         if pages:
@@ -166,7 +183,16 @@ class TriggerAdmin(Cog):
     @option(
         "user", description="Only show triggers from a specific user.", required=False
     )
-    async def list_all(self, ctx: ApplicationContext, user: Member) -> None:
+    @option(
+        "sort_by",
+        description="Sort triggers by provided column",
+        required=False,
+        choices=TRIGGER_COLUMNS,
+        default="pattern",
+    )
+    async def list_all(
+        self, ctx: ApplicationContext, user: Member, sort_by: str
+    ) -> None:
         logger.info(
             "%s invoked /trigger list_all with user=%s",
             ctx.author.name,
@@ -174,9 +200,11 @@ class TriggerAdmin(Cog):
         )
 
         if user is not None:
-            trigger_rows = await self.fetch_triggers(trigger_group.c.owner == user.id)
+            trigger_rows = await self.fetch_triggers(
+                trigger_group.c.owner == user.id, sort_col=sort_by
+            )
         else:
-            trigger_rows = await self.fetch_triggers()
+            trigger_rows = await self.fetch_triggers(sort_col=sort_by)
 
         pages = self.make_trigger_pages(trigger_rows)
         if pages:
