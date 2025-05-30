@@ -161,7 +161,9 @@ class TriggerAdmin(Cog):
         default="pattern",
     )
     async def list(self, ctx: ApplicationContext, sort_by: str) -> None:
-        logger.info("%s invoked /trigger list", ctx.author.name)
+        logger.info(
+            "%s invoked /trigger list with sort_by=%s", ctx.author.name, sort_by
+        )
 
         trigger_rows = await self.fetch_triggers(
             trigger_group.c.owner == ctx.author.id, sort_col=sort_by
@@ -194,9 +196,10 @@ class TriggerAdmin(Cog):
         self, ctx: ApplicationContext, user: Member, sort_by: str
     ) -> None:
         logger.info(
-            "%s invoked /trigger list_all with user=%s",
+            "%s invoked /trigger list_all with user=%s sort_by=%s",
             ctx.author.name,
             getattr(user, "name", None),
+            sort_by,
         )
 
         if user is not None:
