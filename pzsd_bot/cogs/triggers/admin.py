@@ -28,10 +28,21 @@ class TriggerAdmin(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    async def fetch_triggers(self, *args: List[BinaryExpression]) -> List[Row]:
+    async def fetch_triggers(
+        self, *args: List[BinaryExpression], sort_col: str = "pattern"
+    ) -> List[Row]:
         TP = trigger_pattern.columns
         TR = trigger_response.columns
         TG = trigger_group.columns
+
+        col_map = {
+            "pattern": TP.pattern,
+            "created_at": TG.created_at,
+            "updated_at": TG.updated_at,
+            "id": TG.id,
+            "owner": TG.owner,
+        }
+
         async with Session.begin() as session:
             result = await session.execute(
                 select(
@@ -47,6 +58,7 @@ class TriggerAdmin(Cog):
                 .join(trigger_group, TP.group_id == TG.id)
                 .join(trigger_response, TG.id == TR.group_id)
                 .where(*args)
+                .order_by(col_map[sort_col])
             )
             trigger_rows = result.all()
 
@@ -71,7 +83,7 @@ class TriggerAdmin(Cog):
                 triggers[trigger.id]["response"].append(trigger.response)
 
         pages = []
-        for trigger in sorted(triggers.values(), key=lambda t: t["pattern"][0]):
+        for trigger in triggers.values():
             embed = Embed(title="All Triggers")
             patterns = ",".join(dict.fromkeys(trigger["pattern"]))
 
