@@ -11,7 +11,7 @@ from sqlalchemy import insert, select
 
 from pzsd_bot.db import Session
 from pzsd_bot.model import ledger, pzsd_user
-from pzsd_bot.settings import DiceSettings, Emoji, Colors, POINT_MAX_VALUE, POINT_MIN_VALUE
+from pzsd_bot.settings import Colors, DiceSettings, Emoji, POINT_MAX_VALUE, POINT_MIN_VALUE
 
 logger = logging.getLogger(__name__)
 
