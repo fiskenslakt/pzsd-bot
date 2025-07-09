@@ -1,7 +1,7 @@
 import logging
 import re
-from random import randint
 from datetime import datetime
+from random import randint
 
 import discord
 from discord import ApplicationContext, Bot, Message
@@ -144,11 +144,11 @@ class Dice(Cog):
                 recipient = recipient_result.one_or_none()
                 
                 if recipient is None:
-                    await message.reply(f"The selected user is not registered in the system.")
+                    await message.reply("The selected user is not registered in the system.")
                     return
                     
                 if not recipient.is_active:
-                    await message.reply(f"The selected user is not active in the system.")
+                    await message.reply("The selected user is not active in the system.")
                     return
                     
                 # Check for self-point violation
@@ -283,11 +283,11 @@ class Dice(Cog):
             recipient = recipient_result.one_or_none()
             
             if recipient is None:
-                await ctx.respond(f"The selected user is not registered in the system.", ephemeral=True)
+                await ctx.respond("The selected user is not registered in the system.", ephemeral=True)
                 return
                 
             if not recipient.is_active:
-                await ctx.respond(f"The selected user is not active in the system.", ephemeral=True)
+                await ctx.respond("The selected user is not active in the system.", ephemeral=True)
                 return
                 
             # Check for self-point violation
