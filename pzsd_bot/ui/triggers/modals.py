@@ -217,8 +217,8 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
 
         await self.edit_trigger_in_db(patterns, responses)
 
-        # send on_trigger_added event
-        # to add trigger into memory
+        # send on_trigger_modified event
+        # to edit trigger in memory
         self.bot.dispatch(
             "trigger_modified",
             old_patterns=self.old_patterns,
