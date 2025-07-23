@@ -141,11 +141,11 @@ class Triggers(Cog):
                     message.author.name,
                 )
                 match response_type:
-                    case TriggerResponseType.standard.value:
+                    case TriggerResponseType.standard:
                         await message.channel.send(random.choice(responses))
-                    case TriggerResponseType.reply.value:
+                    case TriggerResponseType.reply:
                         await message.reply(random.choice(responses))
-                    case TriggerResponseType.reaction.value:
+                    case TriggerResponseType.reaction:
                         await message.add_reaction(random.choice(responses))
 
         for (
@@ -165,11 +165,11 @@ class Triggers(Cog):
                 response = m.expand(random.choice(responses))
 
                 match response_type:
-                    case TriggerResponseType.standard.value:
+                    case TriggerResponseType.standard:
                         await message.channel.send(response)
-                    case TriggerResponseType.reply.value:
+                    case TriggerResponseType.reply:
                         await message.reply(response)
-                    case TriggerResponseType.reaction.value:
+                    case TriggerResponseType.reaction:
                         await message.add_reaction(response)
 
 
