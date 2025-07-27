@@ -11,7 +11,12 @@ from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import count
 
 from pzsd_bot.db import Session
-from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
+from pzsd_bot.model import (
+    TriggerResponseType,
+    trigger_group,
+    trigger_pattern,
+    trigger_response,
+)
 from pzsd_bot.settings import Roles
 from pzsd_bot.ui.buttons import get_page_buttons
 from pzsd_bot.ui.triggers.modals import AddTriggerModal, EditTriggerModal
@@ -81,7 +86,7 @@ class TriggerAdmin(Cog):
                     "trigger_id": trigger.id,
                     "is_regex": trigger.is_regex,
                     "is_active": trigger.is_active,
-                    "response_type": trigger.response_type,
+                    "response_type": trigger.response_type.value,
                     "owner": f"<@{trigger.owner}>",
                     "created_at": f"<t:{int(trigger.created_at.timestamp())}:f>",
                     "updated_at": f"<t:{int(trigger.updated_at.timestamp())}:f>",
@@ -130,8 +135,8 @@ class TriggerAdmin(Cog):
     @option(
         "response_type",
         description="Which way the trigger should respond.",
-        default="standard",
-        choices=["standard", "reply", "reaction"],
+        default="Standard",
+        choices=["Standard", "Reply", "Reaction"],
     )
     async def add(
         self, ctx: ApplicationContext, is_regex: bool, response_type: str
@@ -142,6 +147,14 @@ class TriggerAdmin(Cog):
             is_regex,
             response_type,
         )
+
+        match response_type:
+            case "Standard":
+                response_type = TriggerResponseType.standard
+            case "Reply":
+                response_type = TriggerResponseType.reply
+            case "Reaction":
+                response_type = TriggerResponseType.reaction
 
         async with Session.begin() as session:
             result = await session.execute(
