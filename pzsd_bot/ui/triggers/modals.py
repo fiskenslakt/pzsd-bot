@@ -2,6 +2,8 @@ import logging
 import re
 from typing import Any, Dict, List, Tuple
 
+import discord
+import emoji
 from discord import Bot, InputTextStyle, Interaction
 from discord.ui import InputText, Modal
 from sqlalchemy import delete, func, insert, update
@@ -27,6 +29,19 @@ class _TriggerModalMixin:
         else:
             return True
 
+    def is_valid_emoji(self, emoji_str: str) -> bool:
+        if emoji.is_emoji(emoji_str):
+            return True
+
+        if emoji.emojize(emoji_str, language="alias") != emoji_str:
+            return True
+
+        if m := re.search(r"<a?:\w+:(\d+)>", emoji_str):
+            emoji_id = int(m[1])
+            return bool(discord.utils.get(self.bot.emojis, id=emoji_id))
+
+        return False
+
     async def get_input(
         self, interaction: Interaction
     ) -> Tuple[List[str], List[str]] | None:
@@ -45,6 +60,24 @@ class _TriggerModalMixin:
             patterns = self.children[0].value.lower().split(",")
 
         responses = self.children[1].value.splitlines()
+
+        if self.response_type is TriggerResponseType.reaction:
+            responses = [
+                emoji.emojize(response.strip(), language="alias")
+                for response in responses
+            ]
+
+            for response in responses:
+                if not self.is_valid_emoji(response):
+                    logger.info(
+                        "%s submitted trigger with invalid reaction, doing nothing.",
+                        interaction.user.name,
+                    )
+                    await interaction.respond(
+                        f"Invalid reaction `{response}`, failed to add trigger.",
+                        ephemeral=True,
+                    )
+                    return
 
         return patterns, responses
 
