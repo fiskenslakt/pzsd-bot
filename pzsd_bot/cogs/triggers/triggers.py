@@ -19,7 +19,7 @@ from pzsd_bot.model import (
 
 logger = logging.getLogger(__name__)
 
-CachedTrigger = DefaultDict[Tuple[int, str, str], List[str]]
+CachedTrigger = DefaultDict[Tuple[int, str, TriggerResponseType], List[str]]
 
 
 class Triggers(Cog):
