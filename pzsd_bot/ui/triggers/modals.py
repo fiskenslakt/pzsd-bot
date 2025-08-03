@@ -54,7 +54,9 @@ class _TriggerModalMixin:
                     "%s submitted trigger with invalid regex, doing nothing.",
                     interaction.user.name,
                 )
-                await interaction.respond("Invalid regex, failed to add trigger.")
+                await interaction.respond(
+                    "Invalid regex, failed to add trigger.", ephemeral=True
+                )
                 return
         else:
             patterns = self.children[0].value.lower().split(",")
