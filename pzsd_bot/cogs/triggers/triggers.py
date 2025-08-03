@@ -72,7 +72,7 @@ class Triggers(Cog):
         patterns: List[str],
         responses: List[str],
         is_regex: bool,
-        response_type: str,
+        response_type: TriggerResponseType,
         group_id: int,
     ) -> None:
         logger.info("Trigger was added, updating triggers in memory")
@@ -86,7 +86,11 @@ class Triggers(Cog):
 
     @Cog.listener()
     async def on_trigger_removed(
-        self, patterns: List[str], is_regex: bool, response_type: str, group_id: int
+        self,
+        patterns: List[str],
+        is_regex: bool,
+        response_type: TriggerResponseType,
+        group_id: int,
     ) -> None:
         logger.info("Trigger was removed, updating triggers in memory")
 
@@ -104,7 +108,7 @@ class Triggers(Cog):
         new_patterns: List[str],
         new_responses: List[str],
         is_regex: bool,
-        response_type: str,
+        response_type: TriggerResponseType,
         group_id: int,
     ) -> None:
         logger.info("Trigger was modified, updating triggers in memory")

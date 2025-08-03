@@ -7,7 +7,12 @@ from discord.ui import InputText, Modal
 from sqlalchemy import delete, func, insert, update
 
 from pzsd_bot.db import Session
-from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
+from pzsd_bot.model import (
+    TriggerResponseType,
+    trigger_group,
+    trigger_pattern,
+    trigger_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +54,7 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
         self,
         *args: Tuple[Any, ...],
         is_regex: bool,
-        response_type: str,
+        response_type: TriggerResponseType,
         bot: Bot,
         **kwargs: Dict[str, Any],
     ) -> None:
@@ -139,7 +144,7 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
         patterns: List[str],
         responses: List[str],
         is_regex: bool,
-        response_type: str,
+        response_type: TriggerResponseType,
         group_id: int,
         bot: Bot,
         **kwargs: Dict[str, Any],
