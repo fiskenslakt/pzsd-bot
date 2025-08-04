@@ -33,9 +33,6 @@ class _TriggerModalMixin:
         if emoji.is_emoji(emoji_str):
             return True
 
-        if emoji.emojize(emoji_str, language="alias") != emoji_str:
-            return True
-
         if m := re.search(r"<a?:\w+:(\d+)>", emoji_str):
             emoji_id = int(m[1])
             return bool(discord.utils.get(self.bot.emojis, id=emoji_id))
