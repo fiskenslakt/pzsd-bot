@@ -10,11 +10,16 @@ from discord.ext.commands import Cog
 from sqlalchemy import select
 
 from pzsd_bot.db import Session
-from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
+from pzsd_bot.model import (
+    TriggerResponseType,
+    trigger_group,
+    trigger_pattern,
+    trigger_response,
+)
 
 logger = logging.getLogger(__name__)
 
-CachedTrigger = DefaultDict[Tuple[int, str], List[str]]
+CachedTrigger = DefaultDict[Tuple[int, str, TriggerResponseType], List[str]]
 
 
 class Triggers(Cog):
@@ -33,7 +38,9 @@ class Triggers(Cog):
         tg = trigger_group.columns
         async with Session.begin() as session:
             result = await session.execute(
-                select(tp.group_id, tp.pattern, tp.is_regex, tr.response)
+                select(
+                    tp.group_id, tp.pattern, tp.is_regex, tg.response_type, tr.response
+                )
                 .join(trigger_group, tp.group_id == tg.id)
                 .join(trigger_response, tg.id == tr.group_id)
                 .where(tg.is_active == True)
@@ -43,7 +50,7 @@ class Triggers(Cog):
         normal_trigger_groups = set()
         regex_trigger_groups = set()
         for trigger in triggers:
-            key = trigger.group_id, trigger.pattern
+            key = trigger.group_id, trigger.pattern, trigger.response_type
             if trigger.is_regex:
                 self.regex_triggers[key].append(trigger.response)
                 regex_trigger_groups.add(trigger.group_id)
@@ -65,12 +72,13 @@ class Triggers(Cog):
         patterns: List[str],
         responses: List[str],
         is_regex: bool,
+        response_type: TriggerResponseType,
         group_id: int,
     ) -> None:
         logger.info("Trigger was added, updating triggers in memory")
 
         for pattern in patterns:
-            key = group_id, pattern
+            key = group_id, pattern, response_type
             if is_regex:
                 self.regex_triggers[key] = responses
             else:
@@ -78,12 +86,16 @@ class Triggers(Cog):
 
     @Cog.listener()
     async def on_trigger_removed(
-        self, patterns: List[str], is_regex: bool, group_id: int
+        self,
+        patterns: List[str],
+        is_regex: bool,
+        response_type: TriggerResponseType,
+        group_id: int,
     ) -> None:
         logger.info("Trigger was removed, updating triggers in memory")
 
         for pattern in patterns:
-            key = group_id, pattern
+            key = group_id, pattern, response_type
             if is_regex:
                 self.regex_triggers.pop(key, None)
             else:
@@ -96,19 +108,20 @@ class Triggers(Cog):
         new_patterns: List[str],
         new_responses: List[str],
         is_regex: bool,
+        response_type: TriggerResponseType,
         group_id: int,
     ) -> None:
         logger.info("Trigger was modified, updating triggers in memory")
 
         for old_pattern in old_patterns:
-            old_key = group_id, old_pattern
+            old_key = group_id, old_pattern, response_type
             if is_regex:
                 self.regex_triggers.pop(old_key, None)
             else:
                 self.normal_triggers.pop(old_key, None)
 
         for new_pattern in new_patterns:
-            new_key = group_id, new_pattern
+            new_key = group_id, new_pattern, response_type
             if is_regex:
                 self.regex_triggers[new_key] = new_responses
             else:
@@ -119,7 +132,11 @@ class Triggers(Cog):
         if message.author == self.bot.user:
             return
 
-        for (group_id, pattern), responses in self.normal_triggers.items():
+        for (
+            group_id,
+            pattern,
+            response_type,
+        ), responses in self.normal_triggers.items():
             if pattern in message.content.lower():
                 logger.info(
                     "Pattern match on '%s' (id=%s) in %s's message",
@@ -127,9 +144,19 @@ class Triggers(Cog):
                     group_id,
                     message.author.name,
                 )
-                await message.channel.send(random.choice(responses))
+                match response_type:
+                    case TriggerResponseType.standard:
+                        await message.channel.send(random.choice(responses))
+                    case TriggerResponseType.reply:
+                        await message.reply(random.choice(responses))
+                    case TriggerResponseType.reaction:
+                        await message.add_reaction(random.choice(responses))
 
-        for (group_id, pattern), responses in self.regex_triggers.items():
+        for (
+            group_id,
+            pattern,
+            response_type,
+        ), responses in self.regex_triggers.items():
             m = re.search(pattern, message.content, re.IGNORECASE)
             if m:
                 logger.info(
@@ -139,8 +166,15 @@ class Triggers(Cog):
                     m[0],
                     message.author.name,
                 )
-                response = random.choice(responses)
-                await message.channel.send(m.expand(response))
+                response = m.expand(random.choice(responses))
+
+                match response_type:
+                    case TriggerResponseType.standard:
+                        await message.channel.send(response)
+                    case TriggerResponseType.reply:
+                        await message.reply(response)
+                    case TriggerResponseType.reaction:
+                        await message.add_reaction(response)
 
 
 def setup(bot: Bot) -> None:

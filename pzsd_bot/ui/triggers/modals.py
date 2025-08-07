@@ -2,12 +2,19 @@ import logging
 import re
 from typing import Any, Dict, List, Tuple
 
+import discord
+import emoji
 from discord import Bot, InputTextStyle, Interaction
 from discord.ui import InputText, Modal
 from sqlalchemy import delete, func, insert, update
 
 from pzsd_bot.db import Session
-from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
+from pzsd_bot.model import (
+    TriggerResponseType,
+    trigger_group,
+    trigger_pattern,
+    trigger_response,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +29,16 @@ class _TriggerModalMixin:
         else:
             return True
 
+    def is_valid_emoji(self, emoji_str: str) -> bool:
+        if emoji.is_emoji(emoji_str):
+            return True
+
+        if m := re.search(r"<a?:\w+:(\d+)>", emoji_str):
+            emoji_id = int(m[1])
+            return bool(discord.utils.get(self.bot.emojis, id=emoji_id))
+
+        return False
+
     async def get_input(
         self, interaction: Interaction
     ) -> Tuple[List[str], List[str]] | None:
@@ -34,19 +51,44 @@ class _TriggerModalMixin:
                     "%s submitted trigger with invalid regex, doing nothing.",
                     interaction.user.name,
                 )
-                await interaction.respond("Invalid regex, failed to add trigger.")
+                await interaction.respond(
+                    "Invalid regex, failed to add trigger.", ephemeral=True
+                )
                 return
         else:
             patterns = self.children[0].value.lower().split(",")
 
         responses = self.children[1].value.splitlines()
 
+        if self.response_type is TriggerResponseType.reaction:
+            responses = [
+                emoji.emojize(response.strip(), language="alias")
+                for response in responses
+            ]
+
+            for response in responses:
+                if not self.is_valid_emoji(response):
+                    logger.info(
+                        "%s submitted trigger with invalid reaction, doing nothing.",
+                        interaction.user.name,
+                    )
+                    await interaction.respond(
+                        f"Invalid reaction `{response}`, failed to add trigger.",
+                        ephemeral=True,
+                    )
+                    return
+
         return patterns, responses
 
 
 class AddTriggerModal(Modal, _TriggerModalMixin):
     def __init__(
-        self, *args: Tuple[Any, ...], is_regex: bool, bot: Bot, **kwargs: Dict[str, Any]
+        self,
+        *args: Tuple[Any, ...],
+        is_regex: bool,
+        response_type: TriggerResponseType,
+        bot: Bot,
+        **kwargs: Dict[str, Any],
     ) -> None:
         super().__init__(*args, **kwargs)
 
@@ -54,6 +96,8 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
 
         self.is_regex = is_regex
         pattern_label = "Trigger {}pattern".format("regex " if is_regex else "")
+
+        self.response_type = response_type
 
         self.add_item(InputText(label=pattern_label, style=InputTextStyle.long))
         self.add_item(InputText(label="Response(s)", style=InputTextStyle.long))
@@ -65,7 +109,9 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
 
         async with Session.begin() as session:
             result = await session.execute(
-                insert(trigger_group).values(owner=owner).returning(trigger_group.c.id)
+                insert(trigger_group)
+                .values(owner=owner, response_type=self.response_type)
+                .returning(trigger_group.c.id)
             )
             group_id: int = result.scalar_one()
 
@@ -116,6 +162,7 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
             patterns=patterns,
             responses=responses,
             is_regex=self.is_regex,
+            response_type=self.response_type,
             group_id=group_id,
         )
 
@@ -129,6 +176,7 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
         patterns: List[str],
         responses: List[str],
         is_regex: bool,
+        response_type: TriggerResponseType,
         group_id: int,
         bot: Bot,
         **kwargs: Dict[str, Any],
@@ -139,6 +187,8 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
 
         self.is_regex = is_regex
         pattern_label = "Trigger {}pattern".format("regex " if is_regex else "")
+
+        self.response_type = response_type
 
         self.old_patterns = patterns
         self.group_id = group_id
@@ -217,14 +267,15 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
 
         await self.edit_trigger_in_db(patterns, responses)
 
-        # send on_trigger_added event
-        # to add trigger into memory
+        # send on_trigger_modified event
+        # to edit trigger in memory
         self.bot.dispatch(
             "trigger_modified",
             old_patterns=self.old_patterns,
             new_patterns=patterns,
             new_responses=responses,
             is_regex=self.is_regex,
+            response_type=self.response_type,
             group_id=self.group_id,
         )
 

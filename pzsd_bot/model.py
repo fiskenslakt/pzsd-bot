@@ -22,6 +22,12 @@ class ReminderStatus(enum.Enum):
     failed = "failed"
 
 
+class TriggerResponseType(enum.Enum):
+    standard = "standard"
+    reply = "reply"
+    reaction = "reaction"
+
+
 metadata = MetaData()
 
 pzsd_user = Table(
@@ -62,6 +68,12 @@ trigger_group = Table(
     Column("id", Integer, primary_key=True, autoincrement=True),
     Column("is_active", Boolean, nullable=False, server_default=text("true")),
     Column("owner", BigInteger, nullable=False),  # discord ID
+    Column(
+        "response_type",
+        Enum(TriggerResponseType),
+        nullable=False,
+        server_default="standard",
+    ),
     Column("created_at", DateTime, server_default=func.now(), nullable=False),
     Column("updated_at", DateTime, server_default=func.now(), nullable=False),
 )

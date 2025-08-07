@@ -1,12 +1,13 @@
 [project]
 name = "pzsd-bot"
-version = "1.15.1"
+version = "1.16.0"
 description = "Discord bot for the PZSD server."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.14.0",
     "asyncpg>=0.30.0",
+    "emoji>=2.14.1",
     "greenlet>=3.1.1",
     "pendulum>=3.0.0",
     "py-cord>=2.6.1",
