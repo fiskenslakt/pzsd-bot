@@ -11,7 +11,12 @@ from sqlalchemy.sql.elements import BinaryExpression
 from sqlalchemy.sql.functions import count
 
 from pzsd_bot.db import Session
-from pzsd_bot.model import trigger_group, trigger_pattern, trigger_response
+from pzsd_bot.model import (
+    TriggerResponseType,
+    trigger_group,
+    trigger_pattern,
+    trigger_response,
+)
 from pzsd_bot.settings import Roles
 from pzsd_bot.ui.buttons import get_page_buttons
 from pzsd_bot.ui.triggers.modals import AddTriggerModal, EditTriggerModal
@@ -57,6 +62,7 @@ class TriggerAdmin(Cog):
                     TG.id,
                     TG.is_active,
                     TP.is_regex,
+                    TG.response_type,
                     TG.owner,
                     TG.created_at,
                     TG.updated_at,
@@ -80,6 +86,7 @@ class TriggerAdmin(Cog):
                     "trigger_id": trigger.id,
                     "is_regex": trigger.is_regex,
                     "is_active": trigger.is_active,
+                    "response_type": trigger.response_type.value,
                     "owner": f"<@{trigger.owner}>",
                     "created_at": f"<t:{int(trigger.created_at.timestamp())}:f>",
                     "updated_at": f"<t:{int(trigger.updated_at.timestamp())}:f>",
@@ -100,9 +107,14 @@ class TriggerAdmin(Cog):
             for response in responses:
                 embed.description += f"* {response}\n"
 
-            value = "Trigger ID: {}\nowner: {}\nis_active: {}\nis_regex: {}\ncreated_at: {}\nupdated_at: {}".format(
+            value = (
+                "Trigger ID: {}\nowner: {}\nresponse_type: {}"
+                "\nis_active: {}\nis_regex: {}\ncreated_at: {}"
+                "\nupdated_at: {}"
+            ).format(
                 trigger["trigger_id"],
                 trigger["owner"],
+                trigger["response_type"],
                 trigger["is_active"],
                 trigger["is_regex"],
                 trigger["created_at"],
@@ -120,10 +132,29 @@ class TriggerAdmin(Cog):
         default=False,
         choices=[True, False],
     )
-    async def add(self, ctx: ApplicationContext, is_regex: bool) -> None:
+    @option(
+        "response_type",
+        description="Which way the trigger should respond.",
+        default="Standard",
+        choices=["Standard", "Reply", "Reaction"],
+    )
+    async def add(
+        self, ctx: ApplicationContext, is_regex: bool, response_type: str
+    ) -> None:
         logger.info(
-            "%s invoked /trigger add with is_regex=%s", ctx.author.name, is_regex
+            "%s invoked /trigger add with is_regex=%s, response_type=%s",
+            ctx.author.name,
+            is_regex,
+            response_type,
         )
+
+        match response_type:
+            case "Standard":
+                response_type = TriggerResponseType.standard
+            case "Reply":
+                response_type = TriggerResponseType.reply
+            case "Reaction":
+                response_type = TriggerResponseType.reaction
 
         async with Session.begin() as session:
             result = await session.execute(
@@ -149,7 +180,12 @@ class TriggerAdmin(Cog):
             await ctx.respond("Holy cow! You have too many triggers!")
             return
 
-        modal = AddTriggerModal(title="New trigger", is_regex=is_regex, bot=self.bot)
+        modal = AddTriggerModal(
+            title="New trigger",
+            is_regex=is_regex,
+            response_type=response_type,
+            bot=self.bot,
+        )
         await ctx.send_modal(modal)
 
     @trigger_cmd.command(description="List triggers.")
@@ -234,6 +270,7 @@ class TriggerAdmin(Cog):
                     trigger_pattern.c.pattern,
                     trigger_response.c.response,
                     trigger_pattern.c.is_regex,
+                    trigger_group.c.response_type,
                 )
                 .join(
                     trigger_response,
@@ -259,12 +296,14 @@ class TriggerAdmin(Cog):
         patterns = [t.pattern for t in trigger]
         responses = [t.response for t in trigger]
         is_regex = trigger[0].is_regex
+        response_type = trigger[0].response_type
 
         modal = EditTriggerModal(
             title="Edit trigger",
             patterns=patterns,
             responses=responses,
             is_regex=is_regex,
+            response_type=response_type,
             group_id=trigger_id,
             bot=self.bot,
         )
@@ -287,13 +326,14 @@ class TriggerAdmin(Cog):
             )
             trigger = trigger_result.all()
 
-            result = await session.execute(
+            response_type = await session.scalar(
                 delete(trigger_group)
                 .where(trigger_group.c.id == trigger_id)
                 .where(is_admin | (trigger_group.c.owner == ctx.author.id))
+                .returning(trigger_group.c.response_type)
             )
 
-        if result.rowcount > 0:
+        if response_type is not None:
             logger.info("Deleted trigger with id=%s", trigger_id)
 
             patterns = []
@@ -306,6 +346,7 @@ class TriggerAdmin(Cog):
                 "trigger_removed",
                 patterns=patterns,
                 is_regex=t.is_regex,
+                response_type=response_type,
                 group_id=trigger_id,
             )
 
@@ -329,11 +370,12 @@ class TriggerAdmin(Cog):
         is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
 
         async with Session.begin() as session:
-            result = await session.execute(
+            response_type = await session.scalar(
                 update(trigger_group)
                 .where(trigger_group.c.id == trigger_id)
                 .where(is_admin | (trigger_group.c.owner == ctx.author.id))
                 .values(is_active=False, updated_at=func.now())
+                .returning(trigger_group.c.response_type)
             )
 
             trigger_result = await session.execute(
@@ -343,7 +385,7 @@ class TriggerAdmin(Cog):
             )
             trigger = trigger_result.all()
 
-        if result.rowcount > 0:
+        if response_type is not None:
             logger.info("Disabled trigger with id=%s", trigger_id)
 
             patterns = []
@@ -356,6 +398,7 @@ class TriggerAdmin(Cog):
                 "trigger_removed",
                 patterns=patterns,
                 is_regex=t.is_regex,
+                response_type=response_type,
                 group_id=trigger_id,
             )
 
@@ -379,11 +422,12 @@ class TriggerAdmin(Cog):
         is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
 
         async with Session.begin() as session:
-            result = await session.execute(
+            response_type = await session.scalar(
                 update(trigger_group)
                 .where(trigger_group.c.id == trigger_id)
                 .where(is_admin | (trigger_group.c.owner == ctx.author.id))
                 .values(is_active=True, updated_at=func.now())
+                .returning(trigger_group.c.response_type)
             )
 
             trigger_result = await session.execute(
@@ -400,7 +444,7 @@ class TriggerAdmin(Cog):
             )
             trigger = trigger_result.all()
 
-        if result.rowcount > 0:
+        if response_type is not None:
             logger.info("Enabled trigger with id=%s", trigger_id)
 
             patterns = []
@@ -416,6 +460,7 @@ class TriggerAdmin(Cog):
                 patterns=patterns,
                 responses=responses,
                 is_regex=t.is_regex,
+                response_type=response_type,
                 group_id=trigger_id,
             )
 
