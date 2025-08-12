@@ -23,4 +23,5 @@ ENTRYPOINT ["entrypoint.sh"]
 CMD ["python", "-m", "pzsd_bot"]
 
 # This tells GitHub that the fiskenslakt/pzsd-bot code repo is allowed to push to the ghcr.io/fiskenslakt/pzsd-bot container repository
+# which will be useful when we set up CI/CD
 LABEL org.opencontainers.image.source=https://github.com/fiskenslakt/pzsd-bot/
