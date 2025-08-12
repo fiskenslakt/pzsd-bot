@@ -19,5 +19,8 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Set the entrypoint script to run on container start
 ENTRYPOINT ["entrypoint.sh"]
 
-# Set the default command to run the bot
+# Run the bot (sent to entrypoint)
 CMD ["python", "-m", "pzsd_bot"]
+
+# This tells GitHub that the fiskenslakt/pzsd-bot code repo is allowed to push to the ghcr.io/fiskenslakt/pzsd-bot container repository
+LABEL org.opencontainers.image.source=https://github.com/fiskenslakt/pzsd-bot/
