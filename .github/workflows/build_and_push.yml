@@ -31,13 +31,13 @@ jobs:
           push: true
           tags: ghcr.io/fiskenslakt/pzsd-bot:latest
 
-#      - name: Install doctl
-#        uses: digitalocean/action-doctl@v2
-#        with:
-#          token: ${{ secrets.DO_TOKEN }}
-#
-#      - name: Save DigitalOcean Kubeconfig
-#        run: doctl kubernetes cluster kubeconfig save personal-k8s-cluster
-#
-#      - name: Restart Kubernetes deployment
-#        run: kubectl rollout restart deployment pzsd-bot --namspace pzsd-bot
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Save DigitalOcean Kubeconfig
+        run: doctl kubernetes cluster kubeconfig save personal-k8s-cluster
+
+      - name: Restart Kubernetes deployment
+        run: kubectl rollout restart deployment pzsd-bot --namspace pzsd-bot
