@@ -7,7 +7,7 @@ ADD . /app
 
 # Install dependencies
 WORKDIR /app
-RUN uv sync --locked --no-dev
+RUN uv sync --no-dev
 
 # Add venv CLI executables to PATH so alembic can run
 ENV PATH="/app/.venv/bin:$PATH"
