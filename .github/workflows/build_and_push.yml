@@ -1,0 +1,43 @@
+name: Build and Push Docker Image
+
+# Run this workflow on any push to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/fiskenslakt/pzsd-bot:latest
+
+#      - name: Install doctl
+#        uses: digitalocean/action-doctl@v2
+#        with:
+#          token: ${{ secrets.DO_TOKEN }}
+#
+#      - name: Save DigitalOcean Kubeconfig
+#        run: doctl kubernetes cluster kubeconfig save personal-k8s-cluster
+#
+#      - name: Restart Kubernetes deployment
+#        run: kubectl rollout restart deployment pzsd-bot --namspace pzsd-bot
