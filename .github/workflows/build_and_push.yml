@@ -40,4 +40,4 @@ jobs:
         run: doctl kubernetes cluster kubeconfig save personal-k8s-cluster
 
       - name: Restart Kubernetes deployment
-        run: kubectl rollout restart deployment pzsd-bot --namspace pzsd-bot
+        run: kubectl rollout restart deployment pzsd-bot --namespace pzsd-bot
