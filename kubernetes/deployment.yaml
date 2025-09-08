@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pzsd-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pzsd-bot
+  template:
+    metadata:
+      labels:
+        app: pzsd-bot
+    spec:
+      imagePullSecrets:
+      - name: ghcr-secret
+      containers:
+      - name: pzsd-bot
+        image: ghcr.io/fiskenslakt/pzsd-bot:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: TOKEN
+          value: "INSECURE"
+        - name: PGUSER
+          value: "INSECURE"
+        - name: PGPASSWORD
+          value: "INSECURE"
+        - name: PGHOST
+          value: "INSECURE"
+        - name: PGPORT
+          value: "INSECURE"
+        - name: PGDATABASE
+          value: "pzsd_bot"
+        - name: LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            cpu: "50m"  # 2.5% of a CPU
+            memory: "64Mi"  # 3%-ish of a Gb
+          limits:
+            cpu: "250m"
+            memory: "160Mi"
