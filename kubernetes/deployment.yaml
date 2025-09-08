@@ -17,8 +17,6 @@ spec:
       containers:
       - name: pzsd-bot
         image: ghcr.io/fiskenslakt/pzsd-bot:latest
-        ports:
-        - containerPort: 80
         env:
         - name: TOKEN
           value: "INSECURE"
