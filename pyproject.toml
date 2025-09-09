@@ -1,6 +1,6 @@
 [project]
 name = "pzsd-bot"
-version = "1.18.0"
+version = "1.19.0"
 description = "Discord bot for the PZSD server."
 readme = "README.md"
 requires-python = ">=3.12"
