@@ -16,6 +16,7 @@ from pzsd_bot.model import (
     trigger_pattern,
     trigger_response,
 )
+from pzsd_bot.settings import TriggerSettings
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,11 @@ class Triggers(Cog):
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
         if message.author == self.bot.user:
+            return
+
+        # If first character of message is the
+        # immunity character it should be ignored
+        if message.content[0] == TriggerSettings.immunity_leading_char:
             return
 
         for (
