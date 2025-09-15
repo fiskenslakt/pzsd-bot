@@ -135,7 +135,10 @@ class Triggers(Cog):
 
         # If first character of message is the
         # immunity character it should be ignored
-        if message.content[0] == TriggerSettings.immunity_leading_char:
+        if (
+            message.content
+            and message.content[0] == TriggerSettings.immunity_leading_char
+        ):
             return
 
         for (
