@@ -124,6 +124,13 @@ class _ReminderSettings(EnvSettings):
 ReminderSettings = _ReminderSettings()
 
 
+class _TriggerSettings(EnvSettings):
+    immunity_leading_char: str = "."
+
+
+TriggerSettings = _TriggerSettings()
+
+
 class _Emoji(EnvSettings):
     dice_0: str = "<:dice_0:1296590662887542907>"
     dice_1: str = "<:dice_1:1296590681229230252>"
