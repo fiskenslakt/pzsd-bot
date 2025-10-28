@@ -1,0 +1,120 @@
+import logging
+
+import pendulum
+from discord import ApplicationContext, Bot, Embed
+from discord.commands import SlashCommandGroup, option
+from discord.ext.commands import Cog
+
+from pzsd_bot.settings import AOCSettings, Colors
+
+logger = logging.getLogger(__name__)
+
+CURRENT_YEAR = pendulum.now().year
+AOC_GENESIS = 2015
+
+
+class AOCLeaderboards(Cog):
+    aoc = SlashCommandGroup("aoc", "Advent of Code related commands.")
+
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        self.cached_leaderboards: dict = {}
+
+    def make_aoc_lb_embed(self, leaderboard: list) -> Embed:
+        ESC = "\x1b"
+        RESET = f"{ESC}[0m"
+        GOLD_BOLD = f"{ESC}[1;33m"
+        RED_BOLD = f"{ESC}[1;31m"
+        GREEN_BOLD = f"{ESC}[1;32m"
+        RED = f"{ESC}[31m"
+        GREEN = f"{ESC}[32m"
+
+        header = f"{GREEN_BOLD}Rank |  Stars  | Score | Name {RESET}"
+        divider = f"{RED_BOLD}-----+---------+-------+-------- {RESET}"
+
+        lines = [header, divider]
+
+        for rank, (score, stars, name) in enumerate(
+            sorted(leaderboard, reverse=True), 1
+        ):
+            if rank == 1:
+                color = GOLD_BOLD
+            elif rank <= 3:
+                color = RED_BOLD if rank % 2 == 0 else GREEN_BOLD
+            else:
+                color = RED if rank % 2 == 0 else GREEN
+
+            stars_str = f"⭐ ({stars})"
+            if stars < 10:
+                stars_str += " "
+
+            line = f"{color}{rank:>3}  | {stars_str:<7}| {score:>5} | {name}{RESET}"
+            lines.append(line)
+
+        embed = Embed(colour=Colors.dark_green.value)
+        embed.description = "```ansi\n" + "\n".join(lines) + "\n```"
+
+        return embed
+
+    @aoc.command(description="View aoc leaderboard.")
+    @option(
+        "year",
+        descrption="What year to fetch the leaderboard for.",
+        default=CURRENT_YEAR,
+        min_value=AOC_GENESIS,
+        max_value=CURRENT_YEAR,
+    )
+    async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
+        logger.info(
+            "`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year
+        )
+
+        last_fetched = None
+        if year in self.cached_leaderboards:
+            last_fetched = self.cached_leaderboards[year]["last_fetched"]
+        else:
+            self.cached_leaderboards[year] = {}
+
+        if last_fetched is None or last_fetched <= pendulum.now().subtract(
+            minutes=AOCSettings.rate_limit
+        ):
+            logger.info(
+                "Last fetch >%smin ago. Fetching current leaderboard",
+                AOCSettings.rate_limit,
+            )
+            client = self.bot.client.session
+            async with client.get(
+                f"{AOCSettings.base_url}/{year}/{AOCSettings.lb_path}?view_key={AOCSettings.view_key}"
+            ) as r:
+                lb_data = await r.json()
+
+            self.cached_leaderboards[year]["lb_data"] = lb_data
+            self.cached_leaderboards[year]["last_fetched"] = pendulum.now()
+        else:
+            logger.info(
+                "Last fetch <%smin ago. Returning leaderboard from cache",
+                AOCSettings.rate_limit,
+            )
+
+        lb_data = self.cached_leaderboards[year]["lb_data"]
+
+        leaderboard = []
+        for member in lb_data["members"].values():
+            leaderboard.append(
+                (
+                    member["local_score"],
+                    member["stars"],
+                    member["name"] or str(member["id"]),
+                )
+            )
+
+        embed = self.make_aoc_lb_embed(leaderboard)
+        embed.title = f"🎄 Advent of Code ✨ {year} Leaderboard 🎄"
+        embed.set_footer(text="Last updated")
+        embed.timestamp = self.cached_leaderboards[year]["last_fetched"]
+
+        await ctx.respond(embed=embed)
+
+
+def setup(bot: Bot) -> None:
+    bot.add_cog(AOCLeaderboards(bot))

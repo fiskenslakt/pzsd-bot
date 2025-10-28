@@ -40,6 +40,7 @@ class Colors(Enum):
     white: int = 0xFFFFFF
     red: int = 0xFF0000
     yellowy: int = 0xA8A434
+    dark_green: int = 0x006600
 
 
 class _DB(EnvSettings):
@@ -183,6 +184,19 @@ class _Emoji(EnvSettings):
 
 
 Emoji = _Emoji()
+
+
+class _AOCSettings(EnvSettings):
+    base_url: str = "https://adventofcode.com"
+    lb_id: str = "269893"
+    lb_path: str = f"leaderboard/private/view/{lb_id}.json"
+    view_key: str
+
+    rate_limit: int = 15  # in minutes
+
+
+AOCSettings = _AOCSettings()
+
 
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE
