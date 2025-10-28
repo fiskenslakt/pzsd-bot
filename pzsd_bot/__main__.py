@@ -4,17 +4,19 @@ import logging
 import discord
 from discord import Intents
 
+from pzsd_bot.client import Client
 from pzsd_bot.db import engine
 from pzsd_bot.settings import Bot
 
 logger = logging.getLogger(__name__)
 
 bot = discord.Bot(intents=Intents.all())
+bot.client = Client()
 
 
 @bot.event
 async def on_ready():
-    print("Ready.")
+    await bot.client.start()
     logger.info("Logged in as %s", bot.user)
 
 
@@ -25,6 +27,7 @@ async def run_bot():
             await bot.start(Bot.token)
     finally:
         await engine.dispose()
+        await bot.client.close()
 
 
 try:
