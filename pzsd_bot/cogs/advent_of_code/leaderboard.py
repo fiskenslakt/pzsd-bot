@@ -9,7 +9,7 @@ from pzsd_bot.settings import AOCSettings, Colors
 
 logger = logging.getLogger(__name__)
 
-CURRENT_YEAR = pendulum.now().year
+CURRENT_YEAR = pendulum.today().year
 AOC_GENESIS = 2015
 
 
