@@ -32,6 +32,8 @@ spec:
           value: "pzsd_bot"
         - name: LOG_LEVEL
           value: "info"
+        - name: VIEW_KEY
+          value: "HO-HO-HO"
         resources:
           requests:
             cpu: "50m"  # 2.5% of a CPU
