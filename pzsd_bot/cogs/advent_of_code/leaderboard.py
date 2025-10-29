@@ -84,7 +84,7 @@ class AOCLeaderboards(Cog):
             )
             client = self.bot.client.session
             async with client.get(
-                f"{AOCSettings.base_url}/{year}/{AOCSettings.lb_path}?view_key={AOCSettings.view_key}"
+                f"{AOCSettings.base_url}/{year}/{AOCSettings.lb_path}.json?view_key={AOCSettings.view_key}"
             ) as r:
                 lb_data = await r.json()
 
@@ -110,6 +110,7 @@ class AOCLeaderboards(Cog):
 
         embed = self.make_aoc_lb_embed(leaderboard)
         embed.title = f"🎄 Advent of Code ✨ {year} Leaderboard 🎄"
+        embed.url = f"{AOCSettings.base_url}/{year}/{AOCSettings.lb_path}"
         embed.set_footer(text="Last updated")
         embed.timestamp = self.cached_leaderboards[year]["last_fetched"]
 

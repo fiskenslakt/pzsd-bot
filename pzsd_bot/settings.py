@@ -189,7 +189,7 @@ Emoji = _Emoji()
 class _AOCSettings(EnvSettings):
     base_url: str = "https://adventofcode.com"
     lb_id: str = "269893"
-    lb_path: str = f"leaderboard/private/view/{lb_id}.json"
+    lb_path: str = f"leaderboard/private/view/{lb_id}"
     view_key: str
 
     rate_limit: int = 15  # in minutes
