@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-import discord
+import pycord.multicog
 from discord import Intents
 
 from pzsd_bot.client import Client
@@ -10,7 +10,7 @@ from pzsd_bot.settings import Bot
 
 logger = logging.getLogger(__name__)
 
-bot = discord.Bot(intents=Intents.all())
+bot = pycord.multicog.Bot(intents=Intents.all())
 bot.client = Client()
 
 

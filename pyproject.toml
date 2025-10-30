@@ -12,6 +12,7 @@ dependencies = [
     "greenlet>=3.1.1",
     "pendulum>=3.0.0",
     "py-cord>=2.6.1",
+    "pycord-multicog>=2.1.1",
     "pydantic>=2.10.5",
     "pydantic-settings>=2.7.1",
     "sqlalchemy>=2.0.37",
