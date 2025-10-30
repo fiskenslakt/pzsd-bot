@@ -6,7 +6,7 @@ from discord import Bot
 from discord.ext.commands import Cog
 
 from pzsd_bot.ext.scheduler import Scheduler
-from pzsd_bot.settings import AOCSettings, Channels, Roles, Guilds
+from pzsd_bot.settings import AOCSettings, Channels, Guilds, Roles
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,7 @@ class AdventOfCode(Cog):
         guild = self.bot.get_guild(Guilds.pzsd)
         aoc_role = guild.get_role(Roles.advent_of_code)
 
-        msg = await aoc_channel.send(
-            f"Today's {aoc_role.mention} puzzle is live!"
-        )
+        msg = await aoc_channel.send(f"Today's {aoc_role.mention} puzzle is live!")
 
         thread = await msg.create_thread(name=f"Day {day} {CURRENT_YEAR}")
         await thread.send(
