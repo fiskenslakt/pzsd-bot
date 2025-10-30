@@ -21,16 +21,29 @@ Bot = _Bot()
 DEBUG_MODE = Bot.debug
 
 
+class _Guilds(EnvSettings):
+    pzsd: int = 905526009980407901
+
+
+Guilds = _Guilds()
+
+
 class _Channels(EnvSettings):
+    model_config = {"env_prefix": "CHANNEL_"}
+
     points_log: int = 1223525487578710016
     points_lounge: int = 1278058432905351178
+    advent_of_code: int = 915402925856149524
 
 
 Channels = _Channels()
 
 
 class _Roles(EnvSettings):
+    model_config = {"env_prefix": "ROLE_"}
+
     admin: int = 905526348959854593
+    advent_of_code: int = 1432944874117664788
 
 
 Roles = _Roles()
@@ -193,6 +206,12 @@ class _AOCSettings(EnvSettings):
     view_key: str
 
     rate_limit: int = 15  # in minutes
+
+    days_in_event: int = 12
+    event_start_month: int = 12
+    event_start_day: int = 1
+
+    aoc_event_active: bool = False
 
 
 AOCSettings = _AOCSettings()
