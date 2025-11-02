@@ -201,9 +201,9 @@ Emoji = _Emoji()
 
 class _AOCSettings(EnvSettings):
     base_url: str = "https://adventofcode.com"
-    lb_id: str = "269893"
-    lb_path: str = f"leaderboard/private/view/{lb_id}"
-    view_key: str
+    private_leaderboard_id: str = "269893"
+    private_leaderboard_path: str = f"leaderboard/private/view/{private_leaderboard_id}"
+    private_leaderboard_key: str
 
     leaderboard_cache_ttl_minutes: int = 15
 
