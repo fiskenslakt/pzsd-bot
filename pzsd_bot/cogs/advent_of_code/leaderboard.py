@@ -48,7 +48,7 @@ class AOCLeaderboards(Cog):
         self.bot = bot
         self.cached_leaderboards: dict[int, CachedLeaderboard] = {}
 
-    def make_aoc_lb_embed(self, leaderboard: list) -> Embed:
+    def make_aoc_lb_embed(self, leaderboard: list[tuple[int, int, str]]) -> Embed:
         ESC = "\x1b"
         RESET = f"{ESC}[0m"
         GOLD_BOLD = f"{ESC}[1;33m"
