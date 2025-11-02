@@ -1,4 +1,5 @@
 import logging
+from typing import TypedDict
 
 import pendulum
 from discord import ApplicationContext, Bot, Embed
@@ -13,12 +14,39 @@ CURRENT_YEAR = pendulum.today().year
 AOC_GENESIS = 2015
 
 
+class CompletionDay(TypedDict):
+    get_star_ts: int
+    star_index: int
+
+
+class LeaderboardMembers(TypedDict):
+    id: int
+    name: str | None
+    stars: int
+    local_score: int
+    last_star_ts: int
+    completion_day_level: dict[str, dict[str, CompletionDay]]
+
+
+class LeaderboardResponse(TypedDict):
+    num_days: int
+    event: str
+    day1_ts: int
+    owner_id: int
+    members: dict[str, LeaderboardMembers]
+
+
+class CachedLeaderboard(TypedDict):
+    last_fetched: pendulum.DateTime
+    leaderboard: LeaderboardResponse
+
+
 class AOCLeaderboards(Cog):
     aoc = SlashCommandGroup("aoc", "Advent of Code related commands.")
 
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.cached_leaderboards: dict = {}
+        self.cached_leaderboards: dict[int, CachedLeaderboard] = {}
 
     def make_aoc_lb_embed(self, leaderboard: list) -> Embed:
         ESC = "\x1b"
@@ -72,8 +100,6 @@ class AOCLeaderboards(Cog):
         last_fetched = None
         if year in self.cached_leaderboards:
             last_fetched = self.cached_leaderboards[year]["last_fetched"]
-        else:
-            self.cached_leaderboards[year] = {}
 
         if last_fetched is None or last_fetched <= pendulum.now().subtract(
             minutes=AOCSettings.leaderboard_cache_ttl_minutes
@@ -88,15 +114,17 @@ class AOCLeaderboards(Cog):
             ) as r:
                 lb_data = await r.json()
 
-            self.cached_leaderboards[year]["lb_data"] = lb_data
-            self.cached_leaderboards[year]["last_fetched"] = pendulum.now()
+            self.cached_leaderboards[year] = {
+                "leaderboard": lb_data,
+                "last_fetched": pendulum.now(),
+            }
         else:
             logger.info(
                 "Last fetch <%smin ago. Returning leaderboard from cache",
                 AOCSettings.leaderboard_cache_ttl_minutes,
             )
 
-        lb_data = self.cached_leaderboards[year]["lb_data"]
+        lb_data = self.cached_leaderboards[year]["leaderboard"]
 
         leaderboard = []
         for member in lb_data["members"].values():
