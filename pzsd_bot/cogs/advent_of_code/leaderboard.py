@@ -76,11 +76,11 @@ class AOCLeaderboards(Cog):
             self.cached_leaderboards[year] = {}
 
         if last_fetched is None or last_fetched <= pendulum.now().subtract(
-            minutes=AOCSettings.rate_limit
+            minutes=AOCSettings.leaderboard_cache_ttl_minutes
         ):
             logger.info(
                 "Last fetch >%smin ago. Fetching current leaderboard",
-                AOCSettings.rate_limit,
+                AOCSettings.leaderboard_cache_ttl_minutes,
             )
             client = self.bot.client.session
             async with client.get(
@@ -93,7 +93,7 @@ class AOCLeaderboards(Cog):
         else:
             logger.info(
                 "Last fetch <%smin ago. Returning leaderboard from cache",
-                AOCSettings.rate_limit,
+                AOCSettings.leaderboard_cache_ttl_minutes,
             )
 
         lb_data = self.cached_leaderboards[year]["lb_data"]

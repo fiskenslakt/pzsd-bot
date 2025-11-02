@@ -205,7 +205,7 @@ class _AOCSettings(EnvSettings):
     lb_path: str = f"leaderboard/private/view/{lb_id}"
     view_key: str
 
-    rate_limit: int = 15  # in minutes
+    leaderboard_cache_ttl_minutes: int = 15
 
     days_in_event: int = 12
     event_start_month: int = 12
