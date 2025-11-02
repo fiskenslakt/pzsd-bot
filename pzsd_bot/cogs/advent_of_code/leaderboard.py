@@ -48,7 +48,12 @@ class AOCLeaderboards(Cog):
         self.bot = bot
         self.cached_leaderboards: dict[int, CachedLeaderboard] = {}
 
-    def make_aoc_lb_embed(self, leaderboard: list[tuple[int, int, str]]) -> Embed:
+    def make_aoc_leaderboard_embed(
+        self,
+        member_scores: list[tuple[int, int, str]],
+        year: int,
+        last_fetched: pendulum.DateTime,
+    ) -> Embed:
         ESC = "\x1b"
         RESET = f"{ESC}[0m"
         GOLD_BOLD = f"{ESC}[1;33m"
@@ -63,7 +68,7 @@ class AOCLeaderboards(Cog):
         lines = [header, divider]
 
         for rank, (score, stars, name) in enumerate(
-            sorted(leaderboard, reverse=True), 1
+            sorted(member_scores, reverse=True), 1
         ):
             if rank == 1:
                 color = GOLD_BOLD
@@ -79,8 +84,14 @@ class AOCLeaderboards(Cog):
             line = f"{color}{rank:>3}  | {stars_str:<7}| {score:>5} | {name}{RESET}"
             lines.append(line)
 
-        embed = Embed(colour=Colors.dark_green.value)
-        embed.description = "```ansi\n" + "\n".join(lines) + "\n```"
+        embed = Embed(
+            colour=Colors.dark_green.value,
+            title=f"🎄 Advent of Code ✨ {year} Leaderboard 🎄",
+            description="```ansi\n" + "\n".join(lines) + "\n```",
+            url=f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}",
+            timestamp=last_fetched,
+        )
+        embed.set_footer(text="Last updated")
 
         return embed
 
@@ -108,6 +119,8 @@ class AOCLeaderboards(Cog):
                 "Last fetch >%smin ago. Fetching current leaderboard",
                 AOCSettings.leaderboard_cache_ttl_minutes,
             )
+            last_fetched = pendulum.now()
+
             client = self.bot.client.session
             async with client.get(
                 f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
@@ -117,7 +130,7 @@ class AOCLeaderboards(Cog):
 
             self.cached_leaderboards[year] = {
                 "leaderboard": lb_data,
-                "last_fetched": pendulum.now(),
+                "last_fetched": last_fetched,
             }
         else:
             logger.info(
@@ -125,11 +138,11 @@ class AOCLeaderboards(Cog):
                 AOCSettings.leaderboard_cache_ttl_minutes,
             )
 
-        lb_data = self.cached_leaderboards[year]["leaderboard"]
+        leaderboard = self.cached_leaderboards[year]["leaderboard"]
 
-        leaderboard = []
-        for member in lb_data["members"].values():
-            leaderboard.append(
+        member_scores = []
+        for member in leaderboard["members"].values():
+            member_scores.append(
                 (
                     member["local_score"],
                     member["stars"],
@@ -137,11 +150,7 @@ class AOCLeaderboards(Cog):
                 )
             )
 
-        embed = self.make_aoc_lb_embed(leaderboard)
-        embed.title = f"🎄 Advent of Code ✨ {year} Leaderboard 🎄"
-        embed.url = f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}"
-        embed.set_footer(text="Last updated")
-        embed.timestamp = self.cached_leaderboards[year]["last_fetched"]
+        embed = self.make_aoc_leaderboard_embed(member_scores, year, last_fetched)
 
         await ctx.respond(embed=embed)
 
