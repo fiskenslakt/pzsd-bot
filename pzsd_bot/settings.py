@@ -211,8 +211,6 @@ class _AOCSettings(EnvSettings):
     event_start_month: int = 12
     event_start_day: int = 1
 
-    aoc_event_active: bool = False
-
 
 AOCSettings = _AOCSettings()
 

@@ -1,9 +1,9 @@
-import asyncio
 import logging
 
 import pendulum
-from discord import Bot
-from discord.ext.commands import Cog
+from discord import ApplicationContext, Bot, default_permissions
+from discord.ext.commands import Cog, slash_command
+from pycord.multicog import subcommand
 
 from pzsd_bot.ext.scheduler import Scheduler
 from pzsd_bot.settings import AOCSettings, Channels, Guilds, Roles
@@ -15,8 +15,39 @@ class AdventOfCode(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.scheduler = Scheduler(__class__.__name__)
+        self.event_active = False
 
-        asyncio.create_task(self.schedule_aoc_thread_posts())
+    @subcommand(group="aoc", independent=True)
+    @slash_command(description="Set aoc event to active.")
+    @default_permissions(administrator=True)
+    async def activate_event(self, ctx: ApplicationContext) -> None:
+        logger.info("/aoc activate_event invoked by %s", ctx.author.name)
+
+        if self.event_active:
+            logger.info("aoc event already active, doing nothing")
+            await ctx.respond("aoc event is already active!")
+            return
+
+        await self.schedule_aoc_thread_posts()
+        self.event_active = True
+
+        await ctx.respond("Event activated", ephemeral=True)
+
+    @subcommand(group="aoc", independent=True)
+    @slash_command(description="Set aoc event to inactive.")
+    @default_permissions(administrator=True)
+    async def deactivate_event(self, ctx: ApplicationContext) -> None:
+        logger.info("/aoc deactivate_event invoked by %s", ctx.author.name)
+
+        if not self.event_active:
+            logger.info("aoc event already inactive, doing nothing")
+            await ctx.respond("aoc event is already inactive!")
+            return
+
+        self.scheduler.cancel_all()
+        self.event_active = False
+
+        await ctx.respond("Event deactivated", ephemeral=True)
 
     async def schedule_aoc_thread_posts(self) -> None:
         logger.info("Scheduling AoC thread posts")
@@ -62,5 +93,4 @@ class AdventOfCode(Cog):
 
 
 def setup(bot: Bot) -> None:
-    if AOCSettings.aoc_event_active:
-        bot.add_cog(AdventOfCode(bot))
+    bot.add_cog(AdventOfCode(bot))
