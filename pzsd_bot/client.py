@@ -11,11 +11,11 @@ class Client:
         self.session: ClientSession | None = None
 
     async def start(self):
-        if not self.session or self.session.closed:
+        if self.session is None or self.session.closed:
             self.session = ClientSession()
 
     async def close(self):
-        if self.session and not self.session.closed:
+        if self.session is not None and not self.session.closed:
             await self.session.close()
 
 
