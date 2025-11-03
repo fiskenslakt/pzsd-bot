@@ -10,8 +10,6 @@ from pzsd_bot.settings import AOCSettings, Channels, Guilds, Roles
 
 logger = logging.getLogger(__name__)
 
-CURRENT_YEAR = pendulum.today().year
-
 
 class AdventOfCode(Cog):
     def __init__(self, bot: Bot):
@@ -23,8 +21,10 @@ class AdventOfCode(Cog):
     async def schedule_aoc_thread_posts(self) -> None:
         logger.info("Scheduling AoC thread posts")
 
+        current_year = pendulum.today().year
+
         event_start = pendulum.datetime(
-            CURRENT_YEAR,
+            current_year,
             AOCSettings.event_start_month,
             AOCSettings.event_start_day,
             tz="America/New_York",
@@ -42,6 +42,8 @@ class AdventOfCode(Cog):
     async def create_aoc_thread(self, day: int) -> None:
         logger.info("Creating aoc thread for day %s", day)
 
+        current_year = pendulum.today().year
+
         aoc_channel = self.bot.get_channel(Channels.advent_of_code)
         if aoc_channel is None:
             logger.error("advent-of-code channel is missing, unable to create thread")
@@ -52,7 +54,7 @@ class AdventOfCode(Cog):
 
         msg = await aoc_channel.send(f"Today's {aoc_role.mention} puzzle is live!")
 
-        thread = await msg.create_thread(name=f"Day {day} {CURRENT_YEAR}")
+        thread = await msg.create_thread(name=f"Day {day} {current_year}")
         await thread.send(
             "You can discuss today's puzzle in this thread.\n"
             r"**All answers and hints must be spoiler tagged.** (eg. \|\| Invert the binary tree \|\|)"

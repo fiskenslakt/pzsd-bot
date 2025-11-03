@@ -12,7 +12,6 @@ from pzsd_bot.settings import AOCSettings, Colors
 
 logger = logging.getLogger(__name__)
 
-CURRENT_YEAR = pendulum.today().year
 AOC_GENESIS = 2015
 
 
@@ -100,16 +99,18 @@ class AOCLeaderboards(Cog):
     @aoc.command(description="View aoc leaderboard.")
     @option("year", description="What year to view the leaderboard for.", default=None)
     async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
+        current_year = pendulum.today().year
+
         deferred = False
 
         logger.info(
             "`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year
         )
         if year is None:
-            year = CURRENT_YEAR
-        elif year < AOC_GENESIS or year > CURRENT_YEAR:
+            year = current_year
+        elif year < AOC_GENESIS or year > current_year:
             await ctx.respond(
-                f"Invalid year, please choose a year between {AOC_GENESIS} and {CURRENT_YEAR}.",
+                f"Invalid year, please choose a year between {AOC_GENESIS} and {current_year}.",
                 ephemeral=True,
             )
             return
