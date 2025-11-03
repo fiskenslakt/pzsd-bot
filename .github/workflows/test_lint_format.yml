@@ -14,7 +14,7 @@ jobs:
     # dummy token for required bot env variable
     env:
       TOKEN: foo
-      VIEW_KEY: bar
+      PRIVATE_LEADERBOARD_KEY: bar
 
     steps:
       - name: Checkout code
