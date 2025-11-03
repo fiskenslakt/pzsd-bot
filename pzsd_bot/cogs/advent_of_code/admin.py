@@ -21,7 +21,7 @@ class AOCAdmin(Cog):
         logger.info("/subscribe invoked by %s", ctx.author.name)
 
         if ctx.author.get_role(Roles.advent_of_code) is not None:
-            logger.info("%s already has aoc role, doing nothing")
+            logger.info("%s already has aoc role, doing nothing", ctx.author.name)
             await ctx.respond("You are already subscribed.")
         else:
             guild = self.bot.get_guild(Guilds.pzsd)
@@ -42,7 +42,7 @@ class AOCAdmin(Cog):
         logger.info("/unsubscribe invoked by %s", ctx.author.name)
 
         if ctx.author.get_role(Roles.advent_of_code) is None:
-            logger.info("%s doesn't have aoc role, doing nothing")
+            logger.info("%s doesn't have aoc role, doing nothing", ctx.author.name)
             await ctx.respond("You already aren't subscribed.")
         else:
             guild = self.bot.get_guild(Guilds.pzsd)
