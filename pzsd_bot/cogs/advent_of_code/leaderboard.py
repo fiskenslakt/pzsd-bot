@@ -98,7 +98,7 @@ class AOCLeaderboards(Cog):
         return embed
 
     @aoc.command(description="View aoc leaderboard.")
-    @option("year", description="What year to fetch the leaderboard for.", default=None)
+    @option("year", description="What year to view the leaderboard for.", default=None)
     async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
         deferred = False
 
