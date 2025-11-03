@@ -109,6 +109,7 @@ class AOCLeaderboards(Cog):
         if year is None:
             year = current_year
         elif year < AOC_GENESIS or year > current_year:
+            logger.info("Invalid year, doing nothing")
             await ctx.respond(
                 f"Invalid year, please choose a year between {AOC_GENESIS} and {current_year}.",
                 ephemeral=True,
