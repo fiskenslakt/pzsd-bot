@@ -2,10 +2,12 @@ import logging
 from typing import TypedDict
 
 import pendulum
+from aiohttp import ClientSession
 from discord import ApplicationContext, Bot, Embed
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
 
+from pzsd_bot.client import retry_middleware
 from pzsd_bot.settings import AOCSettings, Colors
 
 logger = logging.getLogger(__name__)
@@ -96,17 +98,21 @@ class AOCLeaderboards(Cog):
         return embed
 
     @aoc.command(description="View aoc leaderboard.")
-    @option(
-        "year",
-        descrption="What year to fetch the leaderboard for.",
-        default=CURRENT_YEAR,
-        min_value=AOC_GENESIS,
-        max_value=CURRENT_YEAR,
-    )
+    @option("year", description="What year to fetch the leaderboard for.", default=None)
     async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
+        deferred = False
+
         logger.info(
             "`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year
         )
+        if year is None:
+            year = CURRENT_YEAR
+        elif year < AOC_GENESIS or year > CURRENT_YEAR:
+            await ctx.respond(
+                f"Invalid year, please choose a year between {AOC_GENESIS} and {CURRENT_YEAR}.",
+                ephemeral=True,
+            )
+            return
 
         last_fetched = None
         if year in self.cached_leaderboards:
@@ -119,19 +125,38 @@ class AOCLeaderboards(Cog):
                 "Last fetch >%smin ago. Fetching current leaderboard",
                 AOCSettings.leaderboard_cache_ttl_minutes,
             )
+            await ctx.defer()
+            deferred = True
+
             last_fetched = pendulum.now()
 
-            client = self.bot.client.session
-            async with client.get(
+            leaderboard_url = (
                 f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
                 f"?view_key={AOCSettings.private_leaderboard_key}"
-            ) as r:
-                lb_data = await r.json()
+            )
 
-            self.cached_leaderboards[year] = {
-                "leaderboard": lb_data,
-                "last_fetched": last_fetched,
-            }
+            client: ClientSession = self.bot.client.session
+            async with client.get(
+                url=leaderboard_url, middlewares=(retry_middleware,)
+            ) as resp:
+                if resp.ok:
+                    leaderboard_response = await resp.json()
+                    self.cached_leaderboards[year] = {
+                        "leaderboard": leaderboard_response,
+                        "last_fetched": last_fetched,
+                    }
+                else:
+                    logger.warning("Failed to fetch leaderboard")
+                    if year not in self.cached_leaderboards:
+                        logger.info("No %s leaderboard in cache, doing nothing", year)
+                        await ctx.followup.send(
+                            "Unable to fetch leaderboard, please try again later."
+                        )
+                        return
+                    else:
+                        logger.info(
+                            "Last fetch failed, falling back to leaderboard from cache"
+                        )
         else:
             logger.info(
                 "Last fetch <%smin ago. Returning leaderboard from cache",
@@ -152,7 +177,10 @@ class AOCLeaderboards(Cog):
 
         embed = self.make_aoc_leaderboard_embed(member_scores, year, last_fetched)
 
-        await ctx.respond(embed=embed)
+        if deferred:
+            await ctx.followup.send(embed=embed)
+        else:
+            await ctx.respond(embed=embed)
 
 
 def setup(bot: Bot) -> None:

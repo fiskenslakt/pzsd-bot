@@ -1,14 +1,31 @@
-import aiohttp
+import logging
+from asyncio import sleep
+
+from aiohttp import ClientHandlerType, ClientRequest, ClientResponse, ClientSession
+
+logger = logging.getLogger(__name__)
 
 
 class Client:
     def __init__(self):
-        self.session: aiohttp.ClientSession | None = None
+        self.session: ClientSession | None = None
 
     async def start(self):
         if not self.session or self.session.closed:
-            self.session = aiohttp.ClientSession()
+            self.session = ClientSession()
 
     async def close(self):
         if self.session and not self.session.closed:
             await self.session.close()
+
+
+async def retry_middleware(
+    req: ClientRequest, handler: ClientHandlerType
+) -> ClientResponse:
+    for _ in range(3):
+        resp = await handler(req)
+        if resp.ok:
+            return resp
+        logger.info("Request failed, retrying...")
+        await sleep(1)
+    return resp
