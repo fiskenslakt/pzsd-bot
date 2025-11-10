@@ -26,6 +26,11 @@ class AOCAdmin(Cog):
         else:
             guild = self.bot.get_guild(Guilds.pzsd)
             aoc_role = guild.get_role(Roles.advent_of_code)
+            if aoc_role is None:
+                logger.warning("aoc role missing, can't assign role")
+                await ctx.respond("Failed to assign role, contact an admin.")
+                return
+
             await ctx.author.add_roles(
                 aoc_role, reason="Subscribed to aoc notifications"
             )
