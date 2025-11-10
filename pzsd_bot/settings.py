@@ -21,16 +21,29 @@ Bot = _Bot()
 DEBUG_MODE = Bot.debug
 
 
+class _Guilds(EnvSettings):
+    pzsd: int = 905526009980407901
+
+
+Guilds = _Guilds()
+
+
 class _Channels(EnvSettings):
+    model_config = {"env_prefix": "CHANNEL_"}
+
     points_log: int = 1223525487578710016
     points_lounge: int = 1278058432905351178
+    advent_of_code: int = 915402925856149524
 
 
 Channels = _Channels()
 
 
 class _Roles(EnvSettings):
+    model_config = {"env_prefix": "ROLE_"}
+
     admin: int = 905526348959854593
+    advent_of_code: int = 1432944874117664788
 
 
 Roles = _Roles()
@@ -40,6 +53,7 @@ class Colors(Enum):
     white: int = 0xFFFFFF
     red: int = 0xFF0000
     yellowy: int = 0xA8A434
+    dark_green: int = 0x006600
 
 
 class _DB(EnvSettings):
@@ -183,6 +197,23 @@ class _Emoji(EnvSettings):
 
 
 Emoji = _Emoji()
+
+
+class _AOCSettings(EnvSettings):
+    base_url: str = "https://adventofcode.com"
+    private_leaderboard_id: str = "269893"
+    private_leaderboard_path: str = f"leaderboard/private/view/{private_leaderboard_id}"
+    private_leaderboard_key: str
+
+    leaderboard_cache_ttl_minutes: int = 15
+
+    days_in_event: int = 12
+    event_start_month: int = 12
+    event_start_day: int = 1
+
+
+AOCSettings = _AOCSettings()
+
 
 POINT_MAX_VALUE = 9223372036854775807
 POINT_MIN_VALUE = ~POINT_MAX_VALUE

@@ -32,6 +32,18 @@ spec:
           value: "pzsd_bot"
         - name: LOG_LEVEL
           value: "info"
+        - name: PRIVATE_LEADERBOARD_KEY
+          value: "HO-HO-HO"
+        - name: PRIVATE_LEADERBOARD_ID
+          value: "269893"
+        - name: LEADERBOARD_CACHE_TTL_MINUTES
+          value: 15
+        - name: DAYS_IN_EVENT
+          value: 12
+        - name: EVENT_START_MONTH
+          value: 12
+        - name: EVENT_START_DAY
+          value: 1
         resources:
           requests:
             cpu: "50m"  # 2.5% of a CPU
