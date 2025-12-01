@@ -3,6 +3,7 @@ from typing import TypedDict
 
 import pendulum
 from aiohttp import ClientSession
+from ansi.color import fg
 from discord import ApplicationContext, Bot, Embed
 from discord.commands import SlashCommandGroup, option
 from discord.ext.commands import Cog
@@ -55,32 +56,24 @@ class AOCLeaderboards(Cog):
         year: int,
         last_fetched: pendulum.DateTime,
     ) -> Embed:
-        ESC = "\x1b"
-        RESET = f"{ESC}[0m"
-        GOLD_BOLD = f"{ESC}[1;33m"
-        RED_BOLD = f"{ESC}[1;31m"
-        GREEN_BOLD = f"{ESC}[1;32m"
-        RED = f"{ESC}[31m"
-        GREEN = f"{ESC}[32m"
-
-        header = f"{GREEN_BOLD}Rank |  Stars  | Score | Name {RESET}"
-        divider = f"{RED_BOLD}-----+---------+-------+-------- {RESET}"
+        header = fg.boldgreen("Rank |  Stars  | Score | Name ")
+        divider = fg.boldred("-----+---------+-------+-------- ")
 
         lines = [header, divider]
 
         for rank, (score, stars, name) in enumerate(sorted(member_scores, reverse=True), 1):
             if rank == 1:
-                color = GOLD_BOLD
+                color = fg.boldyellow
             elif rank <= 3:
-                color = RED_BOLD if rank % 2 == 0 else GREEN_BOLD
+                color = fg.boldred if rank % 2 == 0 else fg.boldgreen
             else:
-                color = RED if rank % 2 == 0 else GREEN
+                color = fg.red if rank % 2 == 0 else fg.green
 
             stars_str = f"⭐ ({stars})"
             if stars < 10:
                 stars_str += " "
 
-            line = f"{color}{rank:>3}  | {stars_str:<7}| {score:>5} | {name}{RESET}"
+            line = color(f"{rank:>3}  | {stars_str:<7}| {score:>5} | {name}")
             lines.append(line)
 
         embed = Embed(
