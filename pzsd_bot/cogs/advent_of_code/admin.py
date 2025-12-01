@@ -14,9 +14,7 @@ class AOCAdmin(Cog):
         self.bot = bot
 
     @subcommand(group="aoc")
-    @slash_command(
-        name="subscribe", description="Subscribe to aoc puzzle notifications."
-    )
+    @slash_command(name="subscribe", description="Subscribe to aoc puzzle notifications.")
     async def subscribe(self, ctx: ApplicationContext) -> None:
         logger.info("/subscribe invoked by %s", ctx.author.name)
 
@@ -31,18 +29,12 @@ class AOCAdmin(Cog):
                 await ctx.respond("Failed to assign role, contact an admin.")
                 return
 
-            await ctx.author.add_roles(
-                aoc_role, reason="Subscribed to aoc notifications"
-            )
+            await ctx.author.add_roles(aoc_role, reason="Subscribed to aoc notifications")
             logger.info("Added aoc role to %s", ctx.author.name)
-            await ctx.respond(
-                "🎄 You've been subscribed to Advent of Code puzzle notifications! 🎄"
-            )
+            await ctx.respond("🎄 You've been subscribed to Advent of Code puzzle notifications! 🎄")
 
     @subcommand(group="aoc")
-    @slash_command(
-        name="unsubscribe", description="Unsubscribe from aoc puzzle notifications."
-    )
+    @slash_command(name="unsubscribe", description="Unsubscribe from aoc puzzle notifications.")
     async def unsubscribe(self, ctx: ApplicationContext) -> None:
         logger.info("/unsubscribe invoked by %s", ctx.author.name)
 
@@ -52,13 +44,9 @@ class AOCAdmin(Cog):
         else:
             guild = self.bot.get_guild(Guilds.pzsd)
             aoc_role = guild.get_role(Roles.advent_of_code)
-            await ctx.author.remove_roles(
-                aoc_role, reason="Unsubscribed from aoc notifications"
-            )
+            await ctx.author.remove_roles(aoc_role, reason="Unsubscribed from aoc notifications")
             logger.info("Removed aoc role from %s", ctx.author.name)
-            await ctx.respond(
-                "You've been unsubscribed from Advent of Code puzzle notifications. :c"
-            )
+            await ctx.respond("You've been unsubscribed from Advent of Code puzzle notifications. :c")
 
 
 def setup(bot: Bot) -> None:

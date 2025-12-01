@@ -26,9 +26,7 @@ class Dice(Cog):
             result = randint(1, sides)
             await ctx.respond(f"The {sides} sided die landed on {result}")
         else:
-            await ctx.respond(
-                f"The {sides} sided die landed on nothing because that makes no sense."
-            )
+            await ctx.respond(f"The {sides} sided die landed on nothing because that makes no sense.")
 
     @roll.command(description="Roll a 6 sided die.")
     @option(

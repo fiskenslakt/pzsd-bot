@@ -44,9 +44,7 @@ class PointUserAdmin(Cog):
         choices=[True, False],
     )
     @default_permissions(administrator=True)
-    async def register(
-        self, ctx: ApplicationContext, name: str, snowflake: str, point_giver: bool
-    ) -> None:
+    async def register(self, ctx: ApplicationContext, name: str, snowflake: str, point_giver: bool) -> None:
         name = name.lower().strip("\"' \n\t")
 
         logger.info(
@@ -69,9 +67,7 @@ class PointUserAdmin(Cog):
             return
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.name == name)
-            )
+            result = await session.execute(select(pzsd_user).where(pzsd_user.c.name == name))
 
         user_to_add = result.one_or_none()
         if user_to_add is not None:
@@ -120,9 +116,7 @@ class PointUserAdmin(Cog):
         )
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.name == name)
-            )
+            result = await session.execute(select(pzsd_user).where(pzsd_user.c.name == name))
 
         user_to_del = result.one_or_none()
         if user_to_del is None:
@@ -135,11 +129,7 @@ class PointUserAdmin(Cog):
             return
 
         async with Session.begin() as session:
-            await session.execute(
-                update(pzsd_user)
-                .where(pzsd_user.c.name == name)
-                .values(is_active=False)
-            )
+            await session.execute(update(pzsd_user).where(pzsd_user.c.name == name).values(is_active=False))
 
         logger.info("Deactivated user '%s' in user table", name)
         await ctx.respond(f"Deactivated user with name {name}")
@@ -193,15 +183,11 @@ class PointUserAdmin(Cog):
         )
 
         if user == name:
-            logger.info(
-                "Attempting to rename '%s' to the same name, doing nothing.", user
-            )
+            logger.info("Attempting to rename '%s' to the same name, doing nothing.", user)
             return
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.name == user)
-            )
+            result = await session.execute(select(pzsd_user).where(pzsd_user.c.name == user))
 
         user_to_rename = result.one_or_none()
         if user_to_rename is None:
@@ -221,11 +207,7 @@ class PointUserAdmin(Cog):
             return
 
         async with Session.begin() as session:
-            await session.execute(
-                update(pzsd_user)
-                .where(pzsd_user.c.id == user_to_rename.id)
-                .values(name=name)
-            )
+            await session.execute(update(pzsd_user).where(pzsd_user.c.id == user_to_rename.id).values(name=name))
 
         logger.info("Renamed user '%s' to '%s'", user, name)
         await ctx.respond(f"Renamed {user} to {name}")
@@ -243,9 +225,7 @@ class PointUserAdmin(Cog):
         )
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.name == user)
-            )
+            result = await session.execute(select(pzsd_user).where(pzsd_user.c.name == user))
 
         user_to_endow = result.one_or_none()
         if user_to_endow is None:
@@ -258,11 +238,7 @@ class PointUserAdmin(Cog):
             return
 
         async with Session.begin() as session:
-            await session.execute(
-                update(pzsd_user)
-                .where(pzsd_user.c.id == user_to_endow.id)
-                .values(point_giver=True)
-            )
+            await session.execute(update(pzsd_user).where(pzsd_user.c.id == user_to_endow.id).values(point_giver=True))
 
         logger.info("Endowed user '%s' with point giving abilities", user)
         await ctx.respond(f"Endowed {user} with point giving abilities.")
@@ -280,9 +256,7 @@ class PointUserAdmin(Cog):
         )
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(pzsd_user).where(pzsd_user.c.name == user)
-            )
+            result = await session.execute(select(pzsd_user).where(pzsd_user.c.name == user))
 
         user_to_disendow = result.one_or_none()
         if user_to_disendow is None:
@@ -296,9 +270,7 @@ class PointUserAdmin(Cog):
 
         async with Session.begin() as session:
             await session.execute(
-                update(pzsd_user)
-                .where(pzsd_user.c.id == user_to_disendow.id)
-                .values(point_giver=False)
+                update(pzsd_user).where(pzsd_user.c.id == user_to_disendow.id).values(point_giver=False)
             )
 
         logger.info("Removed ability to give points from user '%s'", user)

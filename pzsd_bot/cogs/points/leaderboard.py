@@ -64,9 +64,7 @@ class PointLeaderboard(Cog):
         )
 
         async with Session.begin() as session:
-            j = ledger.join(
-                pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True
-            )
+            j = ledger.join(pzsd_user, pzsd_user.c.id == ledger.c.recipient, isouter=True)
             result = await session.execute(
                 select(pzsd_user.c.name, sql_sum(ledger.c.points))
                 .select_from(j)
@@ -78,15 +76,11 @@ class PointLeaderboard(Cog):
 
         logger.info("Leaderboard length is %s", len(sorted_points))
 
-        leaderboard = (
-            (rank, name, points) for rank, (name, points) in enumerate(sorted_points, 1)
-        )
+        leaderboard = ((rank, name, points) for rank, (name, points) in enumerate(sorted_points, 1))
 
         if paginate:
             leaderboard = batched(leaderboard, page_size)
-            logger.info(
-                "Leaderboard has %s pages", ceil(len(sorted_points) / page_size)
-            )
+            logger.info("Leaderboard has %s pages", ceil(len(sorted_points) / page_size))
 
         return leaderboard
 
@@ -102,9 +96,7 @@ class PointLeaderboard(Cog):
             # words separated by hyphen or space
             name = "".join(map(str.capitalize, re.split(r"( |-)", name)))
             point_total = int(point_total)  # avoid scientific notation
-            embed.add_field(
-                name=f"{rank}. {name}", value=f"{point_total:,} points", inline=False
-            )
+            embed.add_field(name=f"{rank}. {name}", value=f"{point_total:,} points", inline=False)
 
         return embed
 
@@ -128,9 +120,7 @@ class PointLeaderboard(Cog):
 
         pages = []
         for lb_chunk in leaderboard:
-            embed = self.make_leaderboard_embed(
-                "Weekly Points Leaderboard", lb_chunk, description=description
-            )
+            embed = self.make_leaderboard_embed("Weekly Points Leaderboard", lb_chunk, description=description)
             pages.append(embed)
 
         if pages:
@@ -152,19 +142,13 @@ class PointLeaderboard(Cog):
         else:
             points_lounge_channel = self.bot.get_channel(Channels.points_lounge)
             if points_lounge_channel is None:
-                logger.error(
-                    "points-lounge channel is missing, unable to post weekly leaderboard."
-                )
+                logger.error("points-lounge channel is missing, unable to post weekly leaderboard.")
             elif paginator is not None:
                 await paginator.channel_send(points_lounge_channel)
             else:
-                await points_lounge_channel.send(
-                    "No points have been bestowed in the last 7 days!"
-                )
+                await points_lounge_channel.send("No points have been bestowed in the last 7 days!")
 
-    @leaderboard.command(
-        description="Display total points awarded from the beginning of time."
-    )
+    @leaderboard.command(description="Display total points awarded from the beginning of time.")
     async def total(self, ctx: ApplicationContext) -> None:
         logger.info("`/leaderboard total` invoked by %s", ctx.author.name)
 

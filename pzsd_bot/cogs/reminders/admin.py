@@ -83,17 +83,13 @@ class RemindersAdmin(Cog):
 
             channel = self.bot.get_channel(reminder_data.channel_id)
             if channel is not None:
-                original_message = channel.get_partial_message(
-                    reminder_data.original_message_id
-                )
+                original_message = channel.get_partial_message(reminder_data.original_message_id)
                 jump_url = original_message.jump_url
             else:
                 jump_url = None
 
             if reminder_data.recurrence_interval is not None:
-                recurrence_duration = duration(
-                    seconds=reminder_data.recurrence_interval
-                ).in_words()
+                recurrence_duration = duration(seconds=reminder_data.recurrence_interval).in_words()
             else:
                 recurrence_duration = None
 
@@ -119,9 +115,7 @@ class RemindersAdmin(Cog):
 
         async with Session.begin() as session:
             result = await session.execute(
-                update(pzsd_user)
-                .values(timezone=timezone)
-                .where(pzsd_user.c.discord_snowflake == str(ctx.author.id))
+                update(pzsd_user).values(timezone=timezone).where(pzsd_user.c.discord_snowflake == str(ctx.author.id))
             )
 
         if result.rowcount == 0:
@@ -134,9 +128,7 @@ class RemindersAdmin(Cog):
             await ctx.respond(f"Set timezone to '{timezone}'", ephemeral=True)
 
     @slash_command(description="Show reminders from every user.")
-    @option(
-        "user", description="Only show reminders from a specific user.", required=False
-    )
+    @option("user", description="Only show reminders from a specific user.", required=False)
     @default_permissions(administrator=True)
     async def list_all_reminders(self, ctx: ApplicationContext, user: Member) -> None:
         logger.info("%s invoked /list_all_reminders", ctx.author.name)
@@ -180,9 +172,7 @@ class RemindersAdmin(Cog):
     @reminder_cmd.command(description="Delete a reminder")
     @option("reminder_id", description="ID of the reminder to delete.")
     async def delete(self, ctx: ApplicationContext, reminder_id: int) -> None:
-        logger.info(
-            "%s invoked /reminder delete with id=%s", ctx.author.name, reminder_id
-        )
+        logger.info("%s invoked /reminder delete with id=%s", ctx.author.name, reminder_id)
 
         is_admin = true() if ctx.author.get_role(Roles.admin) is not None else false()
 
@@ -208,9 +198,7 @@ class RemindersAdmin(Cog):
 
             await ctx.respond(f"Deleted reminder with id={reminder_id}", ephemeral=True)
         else:
-            logger.info(
-                "Reminder didn't exist or user didn't have permission to delete it"
-            )
+            logger.info("Reminder didn't exist or user didn't have permission to delete it")
 
             await ctx.respond(
                 f"Failed to delete reminder with id={reminder_id} (Doesn't exist or you don't have permission)",
