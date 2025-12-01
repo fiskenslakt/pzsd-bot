@@ -1,5 +1,7 @@
 exclude = ["alembic"]
 
+line-length = 120
+
 [lint]
 # ignore equality comparisons to `True` and `None`
 # ignore return type annotations

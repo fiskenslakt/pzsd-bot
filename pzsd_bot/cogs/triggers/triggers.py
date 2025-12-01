@@ -39,9 +39,7 @@ class Triggers(Cog):
         tg = trigger_group.columns
         async with Session.begin() as session:
             result = await session.execute(
-                select(
-                    tp.group_id, tp.pattern, tp.is_regex, tg.response_type, tr.response
-                )
+                select(tp.group_id, tp.pattern, tp.is_regex, tg.response_type, tr.response)
                 .join(trigger_group, tp.group_id == tg.id)
                 .join(trigger_response, tg.id == tr.group_id)
                 .where(tg.is_active == True)
@@ -135,10 +133,7 @@ class Triggers(Cog):
 
         # If first character of message is the
         # immunity character it should be ignored
-        if (
-            message.content
-            and message.content[0] == TriggerSettings.immunity_leading_char
-        ):
+        if message.content and message.content[0] == TriggerSettings.immunity_leading_char:
             return
 
         for (

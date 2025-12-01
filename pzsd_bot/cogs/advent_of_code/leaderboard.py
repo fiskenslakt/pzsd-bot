@@ -68,9 +68,7 @@ class AOCLeaderboards(Cog):
 
         lines = [header, divider]
 
-        for rank, (score, stars, name) in enumerate(
-            sorted(member_scores, reverse=True), 1
-        ):
+        for rank, (score, stars, name) in enumerate(sorted(member_scores, reverse=True), 1):
             if rank == 1:
                 color = GOLD_BOLD
             elif rank <= 3:
@@ -103,9 +101,7 @@ class AOCLeaderboards(Cog):
 
         deferred = False
 
-        logger.info(
-            "`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year
-        )
+        logger.info("`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year)
         if year is None:
             year = current_year
         elif year < AOC_GENESIS or year > current_year:
@@ -138,9 +134,7 @@ class AOCLeaderboards(Cog):
             )
 
             client: ClientSession = self.bot.client.session
-            async with client.get(
-                url=leaderboard_url, middlewares=(retry_middleware,)
-            ) as resp:
+            async with client.get(url=leaderboard_url, middlewares=(retry_middleware,)) as resp:
                 if resp.ok:
                     leaderboard_response = await resp.json()
                     self.cached_leaderboards[year] = {
@@ -151,14 +145,10 @@ class AOCLeaderboards(Cog):
                     logger.warning("Failed to fetch leaderboard")
                     if year not in self.cached_leaderboards:
                         logger.info("No %s leaderboard in cache, doing nothing", year)
-                        await ctx.followup.send(
-                            "Unable to fetch leaderboard, please try again later."
-                        )
+                        await ctx.followup.send("Unable to fetch leaderboard, please try again later.")
                         return
                     else:
-                        logger.info(
-                            "Last fetch failed, falling back to leaderboard from cache"
-                        )
+                        logger.info("Last fetch failed, falling back to leaderboard from cache")
         else:
             logger.info(
                 "Last fetch <%smin ago. Returning leaderboard from cache",

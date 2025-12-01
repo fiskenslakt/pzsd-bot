@@ -39,9 +39,7 @@ class _TriggerModalMixin:
 
         return False
 
-    async def get_input(
-        self, interaction: Interaction
-    ) -> Tuple[List[str], List[str]] | None:
+    async def get_input(self, interaction: Interaction) -> Tuple[List[str], List[str]] | None:
         if self.is_regex:
             pattern = self.children[0].value
             if self.is_valid_regex(pattern):
@@ -51,9 +49,7 @@ class _TriggerModalMixin:
                     "%s submitted trigger with invalid regex, doing nothing.",
                     interaction.user.name,
                 )
-                await interaction.respond(
-                    "Invalid regex, failed to add trigger.", ephemeral=True
-                )
+                await interaction.respond("Invalid regex, failed to add trigger.", ephemeral=True)
                 return
         else:
             patterns = self.children[0].value.lower().split(",")
@@ -61,10 +57,7 @@ class _TriggerModalMixin:
         responses = self.children[1].value.splitlines()
 
         if self.response_type is TriggerResponseType.reaction:
-            responses = [
-                emoji.emojize(response.strip(), language="alias")
-                for response in responses
-            ]
+            responses = [emoji.emojize(response.strip(), language="alias") for response in responses]
 
             for response in responses:
                 if not self.is_valid_emoji(response):
@@ -102,9 +95,7 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
         self.add_item(InputText(label=pattern_label, style=InputTextStyle.long))
         self.add_item(InputText(label="Response(s)", style=InputTextStyle.long))
 
-    async def add_trigger_to_db(
-        self, owner: int, patterns: List[str], responses: List[str]
-    ) -> int:
+    async def add_trigger_to_db(self, owner: int, patterns: List[str], responses: List[str]) -> int:
         logger.info("Adding new trigger to db")
 
         async with Session.begin() as session:
@@ -151,9 +142,7 @@ class AddTriggerModal(Modal, _TriggerModalMixin):
             return
 
         patterns, responses = modal_input
-        group_id = await self.add_trigger_to_db(
-            interaction.user.id, patterns, responses
-        )
+        group_id = await self.add_trigger_to_db(interaction.user.id, patterns, responses)
 
         # send on_trigger_added event
         # to add trigger into memory
@@ -208,22 +197,12 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
             )
         )
 
-    async def edit_trigger_in_db(
-        self, new_patterns: List[str], new_responses: List[str]
-    ) -> None:
+    async def edit_trigger_in_db(self, new_patterns: List[str], new_responses: List[str]) -> None:
         logger.info("Modifying trigger in db with id=%s", self.group_id)
 
         async with Session.begin() as session:
-            await session.execute(
-                delete(trigger_pattern).where(
-                    trigger_pattern.c.group_id == self.group_id
-                )
-            )
-            await session.execute(
-                delete(trigger_response).where(
-                    trigger_response.c.group_id == self.group_id
-                )
-            )
+            await session.execute(delete(trigger_pattern).where(trigger_pattern.c.group_id == self.group_id))
+            await session.execute(delete(trigger_response).where(trigger_response.c.group_id == self.group_id))
 
             await session.execute(
                 insert(trigger_pattern),
@@ -248,9 +227,7 @@ class EditTriggerModal(Modal, _TriggerModalMixin):
             )
 
             await session.execute(
-                update(trigger_group)
-                .where(trigger_group.c.id == self.group_id)
-                .values(updated_at=func.now())
+                update(trigger_group).where(trigger_group.c.id == self.group_id).values(updated_at=func.now())
             )
 
     async def callback(self, interaction: Interaction):

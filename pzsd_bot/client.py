@@ -19,9 +19,7 @@ class Client:
             await self.session.close()
 
 
-async def retry_middleware(
-    req: ClientRequest, handler: ClientHandlerType
-) -> ClientResponse:
+async def retry_middleware(req: ClientRequest, handler: ClientHandlerType) -> ClientResponse:
     for _ in range(3):
         resp = await handler(req)
         if resp.ok:

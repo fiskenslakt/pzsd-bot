@@ -48,9 +48,7 @@ class Reminders(Cog):
     @staticmethod
     def parse_relative_time(time: str) -> pendulum.Duration | None:
         if m := DURATION_PATTERN.fullmatch(time):
-            duration = {
-                unit: int(amount) for unit, amount in m.groupdict(default=0).items()
-            }
+            duration = {unit: int(amount) for unit, amount in m.groupdict(default=0).items()}
             return pendulum.duration(**duration)
 
     @staticmethod
@@ -64,9 +62,7 @@ class Reminders(Cog):
         logger.info("Loading pending reminders and rescheduling them")
 
         async with Session.begin() as session:
-            result = await session.execute(
-                select(reminder).where(reminder.c.status == ReminderStatus.pending)
-            )
+            result = await session.execute(select(reminder).where(reminder.c.status == ReminderStatus.pending))
             pending_reminders = result.all()
 
         for pending_reminder in pending_reminders:
@@ -107,16 +103,12 @@ class Reminders(Cog):
                 )
                 async with Session.begin() as session:
                     await session.execute(
-                        update(reminder)
-                        .values(status=ReminderStatus.failed)
-                        .where(reminder.c.id == reminder_data.id)
+                        update(reminder).values(status=ReminderStatus.failed).where(reminder.c.id == reminder_data.id)
                     )
 
                 return
 
-        original_message = channel.get_partial_message(
-            reminder_data.original_message_id
-        )
+        original_message = channel.get_partial_message(reminder_data.original_message_id)
         embed = Embed(
             description=reminder_data.reminder_text,
             colour=Colour.blurple(),
@@ -126,9 +118,7 @@ class Reminders(Cog):
         logger.info("Reminder sent (id=%s)", reminder_data.id)
 
         if reminder_data.is_recurring:
-            new_remind_at = reminder_data.remind_at + pendulum.duration(
-                seconds=reminder_data.recurrence_interval
-            )
+            new_remind_at = reminder_data.remind_at + pendulum.duration(seconds=reminder_data.recurrence_interval)
             async with Session.begin() as session:
                 result = await session.execute(
                     update(reminder)
@@ -142,9 +132,7 @@ class Reminders(Cog):
         else:
             logger.debug("Deleting reminder with id=%s", reminder_data.id)
             async with Session.begin() as session:
-                await session.execute(
-                    delete(reminder).where(reminder.c.id == reminder_data.id)
-                )
+                await session.execute(delete(reminder).where(reminder.c.id == reminder_data.id))
 
     @Cog.listener()
     async def on_message(self, message: Message) -> None:
@@ -163,9 +151,7 @@ class Reminders(Cog):
         elif m["preposition"].lower() in ("at", "on"):
             async with Session.begin() as session:
                 result = await session.execute(
-                    select(pzsd_user.c.timezone).where(
-                        pzsd_user.c.discord_snowflake == str(message.author.id)
-                    )
+                    select(pzsd_user.c.timezone).where(pzsd_user.c.discord_snowflake == str(message.author.id))
                 )
                 user_tz = result.scalar_one_or_none()
 
@@ -179,9 +165,7 @@ class Reminders(Cog):
                 remind_at = None
 
         if remind_at is None:
-            logger.info(
-                "%s gave invalid time format: '%s'", message.author.name, m["time"]
-            )
+            logger.info("%s gave invalid time format: '%s'", message.author.name, m["time"])
             await message.add_reaction(Emoji.cross_mark)
             return
 
@@ -259,9 +243,7 @@ class Reminders(Cog):
             coroutine=self.send_reminder(new_reminder),
         )
         await message.add_reaction(Emoji.check_mark)
-        abbreviated_reminder_invocation = (
-            m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
-        )
+        abbreviated_reminder_invocation = m[0][: m[0].find("to") + 2] + "\N{HORIZONTAL ELLIPSIS}"
         logger.info(
             "%s created a reminder: '%s'",
             message.author.name,

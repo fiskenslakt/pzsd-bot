@@ -11,12 +11,8 @@ class Scheduler:
         self._logger = logging.getLogger(f"{__name__}.{name}")
         self.tasks: dict[str, asyncio.Task] = {}
 
-    async def _run_later(
-        self, delay: float, task_id: str, coroutine: abc.Coroutine
-    ) -> None:
-        self._logger.info(
-            "Waiting %s seconds before awaiting task with id=%s", delay, task_id
-        )
+    async def _run_later(self, delay: float, task_id: str, coroutine: abc.Coroutine) -> None:
+        self._logger.info("Waiting %s seconds before awaiting task with id=%s", delay, task_id)
         await asyncio.sleep(delay)
 
         self._logger.info("Awaiting task with id=%s", task_id)
@@ -38,9 +34,7 @@ class Scheduler:
         self.tasks[task_id] = task
         self._logger.debug("Scheduled task with id=%s", task_id)
 
-    def schedule(
-        self, run_at: datetime, task_id: str, coroutine: abc.Coroutine
-    ) -> None:
+    def schedule(self, run_at: datetime, task_id: str, coroutine: abc.Coroutine) -> None:
         now = datetime.now(run_at.tzinfo)
         delay = (run_at - now).total_seconds()
         if delay > 0:
@@ -54,9 +48,7 @@ class Scheduler:
         try:
             task = self.tasks.pop(task_id)
         except KeyError:
-            self._logger.warning(
-                "Failed to cancel task, no task found with id=%s", task_id
-            )
+            self._logger.warning("Failed to cancel task, no task found with id=%s", task_id)
         else:
             task.cancel()
             self._logger.info("Canceled task with id=%s", task_id)

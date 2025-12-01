@@ -32,9 +32,7 @@ class Points(Cog):
         self.bot = bot
 
     @staticmethod
-    async def bestow_points(
-        bestower: Row, recipient: Row, point_amount: int, is_to_everyone: bool
-    ) -> None:
+    async def bestow_points(bestower: Row, recipient: Row, point_amount: int, is_to_everyone: bool) -> None:
         async with Session.begin() as session:
             if is_to_everyone:
                 users = select(
@@ -47,11 +45,7 @@ class Points(Cog):
                     & (pzsd_user.c.discord_snowflake != None)
                     & (pzsd_user.c.point_giver == True)
                 )
-                result = await session.execute(
-                    insert(ledger).from_select(
-                        ["bestower", "recipient", "points"], users
-                    )
-                )
+                result = await session.execute(insert(ledger).from_select(["bestower", "recipient", "points"], users))
                 logger.info("Added %s point transactions to ledger", result.rowcount)
             else:
                 await session.execute(
@@ -63,9 +57,7 @@ class Points(Cog):
                 )
                 logger.info("Added point transaction to ledger")
 
-    async def get_transaction_info(
-        self, message: Message
-    ) -> tuple[str | None, str | None, int | None]:
+    async def get_transaction_info(self, message: Message) -> tuple[str | None, str | None, int | None]:
         recipient_id = recipient_name = point_amount = None
 
         if match := PointsSettings.point_pattern.search(message.content):
@@ -73,15 +65,11 @@ class Points(Cog):
             if recipient_name is not None:
                 recipient_name = recipient_name.strip('"')
             recipient_id = match["recipient_id"]
-        elif message.reference and (
-            match := PointsSettings.reply_point_pattern.search(message.content)
-        ):
+        elif message.reference and (match := PointsSettings.reply_point_pattern.search(message.content)):
             original_message = self.bot.get_message(message.reference.message_id)
             # message wasn't cached, make api call
             if original_message is None:
-                original_message = await message.channel.fetch_message(
-                    message.reference.message_id
-                )
+                original_message = await message.channel.fetch_message(message.reference.message_id)
             recipient_name = None
             recipient_id = str(original_message.author.id)
 
@@ -96,9 +84,7 @@ class Points(Cog):
 
         async with Session.begin() as session:
             result = await session.execute(
-                select(pzsd_user).where(
-                    pzsd_user.c.discord_snowflake == str(message.author.id)
-                )
+                select(pzsd_user).where(pzsd_user.c.discord_snowflake == str(message.author.id))
             )
 
             bestower = result.one_or_none()
@@ -162,9 +148,7 @@ class Points(Cog):
         if message.author == self.bot.user:
             return
 
-        recipient_id, recipient_name, point_amount = await self.get_transaction_info(
-            message
-        )
+        recipient_id, recipient_name, point_amount = await self.get_transaction_info(message)
         # If there's no point amount, the message isn't
         # a transaction and we can ignore it.
         if point_amount is None:
@@ -190,14 +174,10 @@ class Points(Cog):
                 message, bestower, recipient_name, recipient_id, condition
             )
 
-        excessive_point_violation = (
-            not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
-        )
+        excessive_point_violation = not POINT_MIN_VALUE <= point_amount <= POINT_MAX_VALUE
 
         if bestower is not None and recipient is not None:
-            self_point_violation = (
-                is_to_everyone is False and bestower.id == recipient.id
-            )
+            self_point_violation = is_to_everyone is False and bestower.id == recipient.id
         else:
             self_point_violation = False
 
@@ -230,9 +210,7 @@ class Points(Cog):
                     pretty_point_amount,
                     recipient.name if not is_to_everyone else EVERYONE_KEYWORD,
                 )
-                await self.bestow_points(
-                    bestower, recipient, point_amount, is_to_everyone
-                )
+                await self.bestow_points(bestower, recipient, point_amount, is_to_everyone)
                 title = "Point transaction"
                 color = Colors.white.value
                 reaction = Emoji.check_mark
@@ -253,15 +231,11 @@ class Points(Cog):
             message_content = message.content
             if len(message_content) > 80:
                 message_content = message_content[:80] + "\N{HORIZONTAL ELLIPSIS}"
-            embed.add_field(
-                name="Content of message:", value=message_content, inline=False
-            )
+            embed.add_field(name="Content of message:", value=message_content, inline=False)
 
             points_log_channel = self.bot.get_channel(Channels.points_log)
             if points_log_channel is None:
-                logger.error(
-                    "points-log channel is missing, unable to post transaction log."
-                )
+                logger.error("points-log channel is missing, unable to post transaction log.")
             else:
                 await points_log_channel.send(embed=embed)
         else:
