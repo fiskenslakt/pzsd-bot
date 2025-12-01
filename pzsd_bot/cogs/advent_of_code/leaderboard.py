@@ -94,7 +94,7 @@ class AOCLeaderboards(Cog):
 
         deferred = False
 
-        logger.info("`/aoc leaderboard` invoked by %s with year=%s", ctx.author.name, year)
+        logger.info("/aoc leaderboard invoked by %s with year=%s", ctx.author.name, year)
         if year is None:
             year = current_year
         elif year < AOC_GENESIS or year > current_year:
