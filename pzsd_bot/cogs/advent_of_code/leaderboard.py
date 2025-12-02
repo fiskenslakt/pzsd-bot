@@ -169,6 +169,44 @@ class AOCLeaderboards(Cog):
 
         return embed
 
+    def make_aoc_stats_embed(
+        self,
+        daily_stats: list[dict[str, int]],
+        total_members: int,
+        year: int,
+        last_fetched: pendulum.DateTime,
+    ) -> Embed:
+        header = fg.green("Day | ⭐  | ⭐⭐ | ⭐%     | ⭐⭐%")
+        divider = fg.red("----+-----+-----+---------+--------")
+        lines = [header, divider]
+
+        for day, stats in enumerate(daily_stats, 1):
+            star1_count = stats["star1_count"]
+            star2_count = stats["star2_count"]
+
+            if total_members > 0:
+                star1_pct = (star1_count / total_members) * 100
+                star2_pct = (star2_count / total_members) * 100
+            else:
+                star1_pct = 0.0
+                star2_pct = 0.0
+
+            color = fg.green if day % 2 == 1 else fg.red
+
+            line = color(f"{day:>3} | {star1_count:>3} | {star2_count:>3} | {star1_pct:>6.2f}% | {star2_pct:>6.2f}%")
+            lines.append(line)
+
+        embed = Embed(
+            colour=Colors.dark_green.value,
+            title=f"🎄 Advent of Code ✨ {year} Star Stats 🎄",
+            description="```ansi\n" + "\n".join(lines) + "\n```",
+            url=f"{AOCSettings.base_url}/{year}",
+            timestamp=last_fetched,
+        )
+        embed.set_footer(text="Last updated")
+
+        return embed
+
     async def update_leaderboard_data(self, ctx: ApplicationContext, year: int | None) -> tuple[bool, int]:
         current_year = pendulum.today().year
 
@@ -290,6 +328,39 @@ class AOCLeaderboards(Cog):
             )
 
         embed = self.make_aoc_star_times_embed(member_star_times, day, year, last_fetched)
+
+        if deferred:
+            await ctx.followup.send(embed=embed)
+        else:
+            await ctx.respond(embed=embed)
+
+    @aoc.command(description="View aoc stats.")
+    @option("year", description="What year to view the stats for.", default=None)
+    async def stats(self, ctx: ApplicationContext, year: int) -> None:
+        logger.info("/aoc stats invoked by %s with year=%s", ctx.author.name, year)
+
+        try:
+            deferred, year = await self.update_leaderboard_data(ctx, year)
+        except AoCInvalidEventError as e:
+            await ctx.respond(e, ephemeral=True)
+            return
+        except MissingLeaderboardDataError:
+            return
+
+        leaderboard = self.cached_leaderboards[year]["leaderboard"]
+        last_fetched = self.cached_leaderboards[year]["last_fetched"]
+
+        total_members = len(leaderboard["members"])
+        daily_stats = [{"star1_count": 0, "star2_count": 0} for _ in range(leaderboard["num_days"])]
+
+        for member in leaderboard["members"].values():
+            for day in member["completion_day_level"]:
+                if "1" in member["completion_day_level"][day]:
+                    daily_stats[int(day) - 1]["star1_count"] += 1
+                if "2" in member["completion_day_level"][day]:
+                    daily_stats[int(day) - 1]["star2_count"] += 1
+
+        embed = self.make_aoc_stats_embed(daily_stats, total_members, year, last_fetched)
 
         if deferred:
             await ctx.followup.send(embed=embed)
