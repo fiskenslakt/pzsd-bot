@@ -16,6 +16,21 @@ logger = logging.getLogger(__name__)
 AOC_GENESIS = 2015
 
 
+class AoCAPIError(Exception):
+    """Raised when Advent of Code API responds with an error."""
+
+
+class AoCInvalidEventError(Exception):
+    """Raised when user provides an Advent of Code event that doesn't exist."""
+
+    def __init__(self, current_year: int):
+        super().__init__(f"Invalid year, please choose a year between {AOC_GENESIS} and {current_year}.")
+
+
+class MissingLeaderboardDataError(Exception):
+    """Raised when there's no leaderboard data available for the requested year."""
+
+
 class CompletionDay(TypedDict):
     get_star_ts: int
     star_index: int
@@ -49,6 +64,24 @@ class AOCLeaderboards(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.cached_leaderboards: dict[int, CachedLeaderboard] = {}
+
+    async def fetch_leaderboard(self, year: int) -> None:
+        leaderboard_url = (
+            f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
+            f"?view_key={AOCSettings.private_leaderboard_key}"
+        )
+
+        client: ClientSession = self.bot.client.session
+        async with client.get(url=leaderboard_url, middlewares=(retry_middleware,)) as resp:
+            if resp.ok:
+                leaderboard_response = await resp.json()
+                self.cached_leaderboards[year] = {
+                    "leaderboard": leaderboard_response,
+                    "last_fetched": pendulum.now(),
+                }
+            else:
+                logger.warning("Failed to fetch leaderboard")
+                raise AoCAPIError
 
     def make_aoc_leaderboard_embed(
         self,
@@ -87,23 +120,16 @@ class AOCLeaderboards(Cog):
 
         return embed
 
-    @aoc.command(description="View aoc leaderboard.")
-    @option("year", description="What year to view the leaderboard for.", default=None)
-    async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
+    async def update_leaderboard_data(self, ctx: ApplicationContext, year: int) -> tuple[bool, int]:
         current_year = pendulum.today().year
 
         deferred = False
 
-        logger.info("/aoc leaderboard invoked by %s with year=%s", ctx.author.name, year)
         if year is None:
             year = current_year
         elif year < AOC_GENESIS or year > current_year:
             logger.info("Invalid year, doing nothing")
-            await ctx.respond(
-                f"Invalid year, please choose a year between {AOC_GENESIS} and {current_year}.",
-                ephemeral=True,
-            )
-            return
+            raise AoCInvalidEventError(current_year)
 
         last_fetched = None
         if year in self.cached_leaderboards:
@@ -119,36 +145,38 @@ class AOCLeaderboards(Cog):
             await ctx.defer()
             deferred = True
 
-            last_fetched = pendulum.now()
-
-            leaderboard_url = (
-                f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
-                f"?view_key={AOCSettings.private_leaderboard_key}"
-            )
-
-            client: ClientSession = self.bot.client.session
-            async with client.get(url=leaderboard_url, middlewares=(retry_middleware,)) as resp:
-                if resp.ok:
-                    leaderboard_response = await resp.json()
-                    self.cached_leaderboards[year] = {
-                        "leaderboard": leaderboard_response,
-                        "last_fetched": last_fetched,
-                    }
+            try:
+                await self.fetch_leaderboard(year)
+            except AoCAPIError:
+                if year not in self.cached_leaderboards:
+                    logger.info("No %s leaderboard in cache, doing nothing", year)
+                    await ctx.followup.send("Unable to fetch leaderboard, please try again later.")
+                    raise MissingLeaderboardDataError
                 else:
-                    logger.warning("Failed to fetch leaderboard")
-                    if year not in self.cached_leaderboards:
-                        logger.info("No %s leaderboard in cache, doing nothing", year)
-                        await ctx.followup.send("Unable to fetch leaderboard, please try again later.")
-                        return
-                    else:
-                        logger.info("Last fetch failed, falling back to leaderboard from cache")
+                    logger.info("Last fetch failed, falling back to leaderboard from cache")
         else:
             logger.info(
                 "Last fetch <%smin ago. Returning leaderboard from cache",
                 AOCSettings.leaderboard_cache_ttl_minutes,
             )
 
+        return deferred, year
+
+    @aoc.command(description="View aoc leaderboard.")
+    @option("year", description="What year to view the leaderboard for.", default=None)
+    async def leaderboard(self, ctx: ApplicationContext, year: int) -> None:
+        logger.info("/aoc leaderboard invoked by %s with year=%s", ctx.author.name, year)
+
+        try:
+            deferred, year = await self.update_leaderboard_data(ctx, year)
+        except AoCInvalidEventError as e:
+            await ctx.respond(e, ephemeral=True)
+            return
+        except MissingLeaderboardDataError:
+            return
+
         leaderboard = self.cached_leaderboards[year]["leaderboard"]
+        last_fetched = self.cached_leaderboards[year]["last_fetched"]
 
         member_scores = []
         for member in leaderboard["members"].values():
