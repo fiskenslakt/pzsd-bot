@@ -120,7 +120,56 @@ class AOCLeaderboards(Cog):
 
         return embed
 
-    async def update_leaderboard_data(self, ctx: ApplicationContext, year: int) -> tuple[bool, int]:
+    def make_aoc_star_times_embed(
+        self,
+        member_star_times: list[tuple[int | None, int | None, str]],
+        day: int,
+        year: int,
+        last_fetched: pendulum.DateTime,
+    ) -> Embed:
+        longest_name = max((len(name) for *_, name in member_star_times), default=4)
+
+        header = fg.green(f"Rank | {'Name'.ljust(longest_name)} | ⭐       | ⭐⭐")
+        divider = fg.red(f"-----+{'-' * (longest_name + 2)}+----------+----------")
+
+        lines = [header, divider]
+
+        # Sort by first star time
+        member_star_times.sort(key=lambda x: x[0] or float("inf"))
+
+        def get_completion_time(timestamp: int | None) -> str:
+            """Format a timestamp into HH:MM:SS, or >24h if not same day."""
+            if timestamp is None:
+                return "--:--:--"
+
+            dt = pendulum.from_timestamp(timestamp, tz="America/New_York")
+
+            if dt.day != day:
+                return ">24h"
+
+            return dt.to_time_string()
+
+        for rank, (ts1, ts2, name) in enumerate(member_star_times, 1):
+            color = fg.green if rank % 2 == 1 else fg.red
+
+            star1_time = get_completion_time(ts1)
+            star2_time = get_completion_time(ts2)
+
+            line = color(f"{rank:>3}  | {name.ljust(longest_name)} | {star1_time:>8} | {star2_time:>8}")
+            lines.append(line)
+
+        embed = Embed(
+            colour=Colors.dark_green.value,
+            title=f"🎄 Advent of Code {year} ✨ Day {day} Star Times 🎄",
+            description="```ansi\n" + "\n".join(lines) + "\n```",
+            url=f"{AOCSettings.base_url}/{year}/day/{day}",
+            timestamp=last_fetched,
+        )
+        embed.set_footer(text="Last updated")
+
+        return embed
+
+    async def update_leaderboard_data(self, ctx: ApplicationContext, year: int | None) -> tuple[bool, int]:
         current_year = pendulum.today().year
 
         deferred = False
@@ -189,6 +238,58 @@ class AOCLeaderboards(Cog):
             )
 
         embed = self.make_aoc_leaderboard_embed(member_scores, year, last_fetched)
+
+        if deferred:
+            await ctx.followup.send(embed=embed)
+        else:
+            await ctx.respond(embed=embed)
+
+    @aoc.command(description="View aoc star times.")
+    @option("day", description="What day to view the star times for.")
+    @option("year", description="What year to view the star times for.", default=None)
+    async def star_times(self, ctx: ApplicationContext, day: int, year: int) -> None:
+        logger.info("/aoc star_times invoked by %s with day=%s, year=%s", ctx.author.name, day, year)
+
+        try:
+            deferred, year = await self.update_leaderboard_data(ctx, year)
+        except AoCInvalidEventError as e:
+            await ctx.respond(e, ephemeral=True)
+            return
+        except MissingLeaderboardDataError:
+            return
+
+        leaderboard = self.cached_leaderboards[year]["leaderboard"]
+        last_fetched = self.cached_leaderboards[year]["last_fetched"]
+
+        if day < 1 or day > leaderboard["num_days"]:
+            logger.info("Invalid day '%s' given for year %s, doing nothing", day, year)
+            msg = f"Invalid day for {year}, try again"
+            if deferred:
+                await ctx.followup.send(msg)
+            else:
+                await ctx.respond(msg)
+            return
+
+        member_star_times = []
+        for member in leaderboard["members"].values():
+            star1_timestamp = None
+            star2_timestamp = None
+
+            if str(day) in member["completion_day_level"]:
+                if "1" in member["completion_day_level"][str(day)]:
+                    star1_timestamp = member["completion_day_level"][str(day)]["1"]["get_star_ts"]
+                if "2" in member["completion_day_level"][str(day)]:
+                    star2_timestamp = member["completion_day_level"][str(day)]["2"]["get_star_ts"]
+
+            member_star_times.append(
+                (
+                    star1_timestamp,
+                    star2_timestamp,
+                    member["name"] or str(member["id"]),
+                )
+            )
+
+        embed = self.make_aoc_star_times_embed(member_star_times, day, year, last_fetched)
 
         if deferred:
             await ctx.followup.send(embed=embed)
