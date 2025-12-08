@@ -66,13 +66,11 @@ class AOCLeaderboards(Cog):
         self.cached_leaderboards: dict[int, CachedLeaderboard] = {}
 
     async def fetch_leaderboard(self, year: int) -> None:
-        leaderboard_url = (
-            f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
-            f"?view_key={AOCSettings.private_leaderboard_key}"
-        )
+        leaderboard_url = f"{AOCSettings.base_url}/{year}/{AOCSettings.private_leaderboard_path}.json"
+        params = {"view_key": AOCSettings.private_leaderboard_key}
 
         client: ClientSession = self.bot.client.session
-        async with client.get(url=leaderboard_url, middlewares=(retry_middleware,)) as resp:
+        async with client.get(url=leaderboard_url, params=params, middlewares=(retry_middleware,)) as resp:
             if resp.ok:
                 leaderboard_response = await resp.json()
                 self.cached_leaderboards[year] = {
