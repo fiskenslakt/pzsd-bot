@@ -144,6 +144,15 @@ wheels = [
 ]
 
 [[package]]
+name = "ansi"
+version = "0.3.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/58/9444d8e465858ae9cb2096aa48236ab5760ea9dbaac58e609f3b461776de/ansi-0.3.7.tar.gz", hash = "sha256:7e59108922259e03c54e4d93fc611bba0e756513086849708b86b6c80f8d4cd4", size = 7926 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0e/44/8244b092c39aa39cb61afcb5d64f4a2a22bf9ab291d5f689a9406d158d04/ansi-0.3.7-py3-none-any.whl", hash = "sha256:bdd9e3c2dc3e4c8df8c2b745ca6f07f715aa4edee5ed4a5bcb29065da06a3f71", size = 9000 },
+]
+
+[[package]]
 name = "asyncpg"
 version = "0.30.0"
 source = { registry = "https://pypi.org/simple" }
@@ -641,11 +650,12 @@ wheels = [
 
 [[package]]
 name = "pzsd-bot"
-version = "1.22.0"
+version = "1.24.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "alembic" },
+    { name = "ansi" },
     { name = "asyncpg" },
     { name = "emoji" },
     { name = "greenlet" },
@@ -671,6 +681,7 @@ dev = [
 requires-dist = [
     { name = "aiohttp", specifier = ">=3.13" },
     { name = "alembic", specifier = ">=1.14.0" },
+    { name = "ansi", specifier = ">=0.3.7" },
     { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "emoji", specifier = ">=2.14.1" },
     { name = "greenlet", specifier = ">=3.1.1" },

@@ -13,7 +13,7 @@ class AOCAdmin(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @subcommand(group="aoc")
+    @subcommand(group="aoc", independent=True)
     @slash_command(name="subscribe", description="Subscribe to aoc puzzle notifications.")
     async def subscribe(self, ctx: ApplicationContext) -> None:
         logger.info("/subscribe invoked by %s", ctx.author.name)
@@ -33,7 +33,7 @@ class AOCAdmin(Cog):
             logger.info("Added aoc role to %s", ctx.author.name)
             await ctx.respond("🎄 You've been subscribed to Advent of Code puzzle notifications! 🎄")
 
-    @subcommand(group="aoc")
+    @subcommand(group="aoc", independent=True)
     @slash_command(name="unsubscribe", description="Unsubscribe from aoc puzzle notifications.")
     async def unsubscribe(self, ctx: ApplicationContext) -> None:
         logger.info("/unsubscribe invoked by %s", ctx.author.name)
