@@ -43,7 +43,7 @@ class _Roles(EnvSettings):
     model_config = {"env_prefix": "ROLE_"}
 
     admin: int = 905526348959854593
-    advent_of_code: int = 1432944874117664788
+    advent_of_code: int = 1574484361347211355
 
 
 Roles = _Roles()
